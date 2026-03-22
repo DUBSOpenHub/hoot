@@ -157,14 +157,12 @@ export function createBot(): Bot {
           void (async () => {
             try {
             const safeText = text ?? "(No response)";
-            console.log("[hoot-debug] Response text length:", safeText.length, "first 200:", safeText.slice(0, 200));
             const routeResult = getLastRouteResult();
             let indicatorSuffix = "";
             if (routeResult && routeResult.routerMode === "auto") {
               indicatorSuffix = `\n\n_⚡ auto · ${routeResult.model}_`;
             }
             const formatted = toTelegramMarkdown(safeText) + indicatorSuffix;
-            console.log("[hoot-debug] Formatted length:", formatted.length);
             const chunks = chunkMessage(formatted);
             const fallbackText = routeResult && routeResult.routerMode === "auto"
               ? safeText + `\n\n⚡ auto · ${routeResult.model}`
@@ -182,19 +180,14 @@ export function createBot(): Bot {
               for (let i = 0; i < chunks.length; i++) {
                 await sendChunk(chunks[i], fallbackChunks[i] ?? chunks[i], i === 0);
               }
-            } catch (fmtErr) {
-              console.error("[hoot-debug] Fallback send error:", fmtErr);
+            } catch {
               try {
                 for (let i = 0; i < fallbackChunks.length; i++) {
                   await ctx.reply(fallbackChunks[i], i === 0 ? { reply_parameters: replyParams } : {});
                 }
-              } catch (fbErr) {
-                console.error("[hoot-debug] Final fallback error:", fbErr);
-              }
+              } catch {}
             }
-            } catch (outerErr) {
-              console.error("[hoot-debug] Outer callback error:", outerErr);
-            }
+            } catch {}
           })();
         }
       }
