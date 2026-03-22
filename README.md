@@ -374,7 +374,10 @@ Yes — the default Copilot SDK backend requires cloud connectivity. But all sto
 Absolutely. Telegram is optional. The TUI and HTTP API work without it.
 
 **How much memory does it use?**
-~200MB base + ~400MB per active worker session. The worker pool caps at 5 concurrent workers by default.
+~200MB base + ~400MB per active worker. Each worker is a full Copilot SDK session — not a lightweight thread, a real AI session with its own context, tools, and file access. 5 concurrent workers = ~2.2GB total. This is configurable via `MAX_CONCURRENT_WORKERS` in `.env`.
+
+**How many things can it do in parallel?**
+5 concurrent workers by default. Each worker can independently run commands, edit files, and call tools. Workers can also invoke Stampede (up to 20 parallel CLI agents in tmux panes), so one Telegram message can theoretically orchestrate 100 parallel agents — though API rate limits are the practical ceiling.
 
 **What models does Hoot use?**
 3-tier routing: GPT-4.1 (fast/trivial), Claude Sonnet 4.6 (standard/coding), Claude Opus 4.6 (premium/complex). The LLM classifier auto-selects with keyword overrides.

@@ -527,20 +527,20 @@ export default function Home() {
               <em>rule them all</em>
             </h2>
             <p className="section-sub">
-              Hoot is a personal AI daemon that runs 24/7 on your Mac. It
-              orchestrates up to 5 concurrent AI workers, routes messages
-              from Telegram, and remembers every conversation in a local
-              SQLite store.
+              Hoot is a personal AI daemon that runs 24/7 on your Mac. Each worker
+              is a full Copilot SDK session (~400MB RAM). 5 concurrent workers
+              means ~2GB of parallel AI compute on your machine — real sessions
+              doing real work, not prompt-swapping.
             </p>
 
             <div className="about-stats">
               <div className="stat-card">
-                <div className="stat-number">20</div>
-                <div className="stat-label">Skills Loaded</div>
+                <div className="stat-number">265</div>
+                <div className="stat-label">Superpowers Loaded</div>
               </div>
               <div className="stat-card">
                 <div className="stat-number">5</div>
-                <div className="stat-label">Max Workers</div>
+                <div className="stat-label">Parallel Workers (~2GB)</div>
               </div>
               <div className="stat-card">
                 <div className="stat-number">3s</div>
