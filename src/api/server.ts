@@ -60,9 +60,12 @@ const app = express();
 app.use(express.json());
 
 app.use((_req: Request, res: Response, next: NextFunction) => {
-  res.setHeader("Access-Control-Allow-Origin", "null");
+  const origin = _req.headers.origin;
+  const allowed = !origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  res.setHeader("Access-Control-Allow-Origin", allowed && origin ? origin : "http://localhost:3333");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+  if (_req.method === "OPTIONS") { res.status(204).end(); return; }
   next();
 });
 
