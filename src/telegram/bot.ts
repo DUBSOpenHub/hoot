@@ -155,16 +155,20 @@ export function createBot(): Bot {
         if (done) {
           stopTyping();
           void (async () => {
+            try {
+            const safeText = text ?? "(No response)";
+            console.log("[hoot-debug] Response text length:", safeText.length, "first 200:", safeText.slice(0, 200));
             const routeResult = getLastRouteResult();
             let indicatorSuffix = "";
             if (routeResult && routeResult.routerMode === "auto") {
               indicatorSuffix = `\n\n_⚡ auto · ${routeResult.model}_`;
             }
-            const formatted = toTelegramMarkdown(text) + indicatorSuffix;
+            const formatted = toTelegramMarkdown(safeText) + indicatorSuffix;
+            console.log("[hoot-debug] Formatted length:", formatted.length);
             const chunks = chunkMessage(formatted);
             const fallbackText = routeResult && routeResult.routerMode === "auto"
-              ? text + `\n\n⚡ auto · ${routeResult.model}`
-              : text;
+              ? safeText + `\n\n⚡ auto · ${routeResult.model}`
+              : safeText;
             const fallbackChunks = chunkMessage(fallbackText);
             const sendChunk = async (chunk: string, fallback: string, isFirst: boolean) => {
               const opts = isFirst
@@ -178,13 +182,18 @@ export function createBot(): Bot {
               for (let i = 0; i < chunks.length; i++) {
                 await sendChunk(chunks[i], fallbackChunks[i] ?? chunks[i], i === 0);
               }
-            } catch {
+            } catch (fmtErr) {
+              console.error("[hoot-debug] Fallback send error:", fmtErr);
               try {
                 for (let i = 0; i < fallbackChunks.length; i++) {
                   await ctx.reply(fallbackChunks[i], i === 0 ? { reply_parameters: replyParams } : {});
                 }
-              } catch {
+              } catch (fbErr) {
+                console.error("[hoot-debug] Final fallback error:", fbErr);
               }
+            }
+            } catch (outerErr) {
+              console.error("[hoot-debug] Outer callback error:", outerErr);
             }
           })();
         }

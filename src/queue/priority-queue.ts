@@ -64,7 +64,7 @@ const LANE_CONFIG: Record<Lane, LaneConfig> = {
 };
 
 interface QueueItem extends EnqueueOptions {
-  resolve: () => void;
+  resolve: (result?: any) => void;
   reject: (err: unknown) => void;
   _legacyMsg?: any; // original QueuedLaneMessage for legacy API
 }
@@ -110,8 +110,8 @@ class LaneRunner {
       ? () => this._legacyExecutor!(item._legacyMsg ?? item)
       : () => this.rateLimiter.acquire().then(() => item.handler());
 
-    doWork().then(() => {
-      item.resolve();
+    doWork().then((result) => {
+      item.resolve(result);
     }).catch((err) => {
       item.reject(err);
     }).finally(() => {

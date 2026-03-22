@@ -321,9 +321,20 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
   });
 
   try {
-    const finalContent = await sdkOrchestratorBreaker.execute(() =>
-      session.sendAndWait(prompt, 300_000)
+    log.info("Sending to SDK", { promptLength: prompt.length });
+    const timeoutMs = 30_000;
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Response timed out after 30s")), timeoutMs)
     );
+    const finalContent = await sdkOrchestratorBreaker.execute(() =>
+      Promise.race([session.sendAndWait(prompt, timeoutMs), timeoutPromise])
+    );
+    log.info("SDK responded RAW", { 
+      type: typeof finalContent, 
+      value: typeof finalContent === 'string' ? finalContent.slice(0, 300) : String(finalContent),
+      length: typeof finalContent === 'string' ? finalContent.length : -1,
+      accumulatedLength: accumulated.length 
+    });
     return finalContent || accumulated || "(No response)";
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -366,6 +377,7 @@ async function processQueue(): Promise<void> {
       lastRouteResult = routeResult;
 
       const result = await executeOnSession(item.prompt, item.callback);
+      log.info("processQueue resolving", { resultLength: result?.length, first200: result?.slice(0, 200) });
       item.resolve(result);
     } catch (err) {
       item.reject(err);
@@ -451,6 +463,7 @@ export async function sendToOrchestrator(
             processQueue();
           }
         });
+        log.info("Promise resolved in sendToOrchestrator", { finalContentLength: finalContent?.length, first200: finalContent?.slice(0, 200) });
         callback(finalContent, true);
         try { logMessage("out", sourceLabel, finalContent); } catch { /* best-effort */ }
         try { logConversation(logRole, prompt, sourceLabel); } catch { /* best-effort */ }
@@ -472,7 +485,10 @@ export async function sendToOrchestrator(
         }
 
         log.error("Error processing message", { msg, correlationId });
-        callback(`Error: ${msg}`, true);
+        const userMsg = /timed out/i.test(msg)
+          ? "⏱️ That request timed out after 30s. This usually means a tool or service I tried to reach isn't connected yet. Try a simpler question, or ask me what I can do!"
+          : `Error: ${msg}`;
+        callback(userMsg, true);
         return;
       }
     }
