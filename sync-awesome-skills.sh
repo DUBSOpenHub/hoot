@@ -50,24 +50,37 @@ echo "[$(date)] Sync complete. $NEW new skills. $FINAL_COUNT total." >> "$LOG"
 
 # Notify only if new skills were added
 if [ "$NEW" -gt 0 ]; then
-  # Build list of new skill names
+  # Build detailed list of new items with type and link
   NEW_LIST=""
   while IFS= read -r skill; do
     [ -z "$skill" ] && continue
-    META="$HOME/.max/skills/$skill/_meta.json"
-    if [ -f "$META" ] && grep -q "awesome-copilot" "$META"; then
-      CREATED=$(stat -f "%m" "$HOME/.max/skills/$skill/SKILL.md" 2>/dev/null)
-      NOW=$(date +%s)
-      AGE=$(( NOW - CREATED ))
-      # If created in the last 2 minutes, it's new from this sync
-      if [ "$AGE" -lt 120 ]; then
-        NEW_LIST="${NEW_LIST}• ${skill}\n"
+    SKILL_FILE="$HOME/.max/skills/$skill/SKILL.md"
+    [ ! -f "$SKILL_FILE" ] && continue
+    CREATED=$(stat -f "%m" "$SKILL_FILE" 2>/dev/null)
+    NOW=$(date +%s)
+    AGE=$(( NOW - CREATED ))
+    if [ "$AGE" -lt 120 ]; then
+      # Parse frontmatter for name and description
+      SNAME=$(grep "^name:" "$SKILL_FILE" 2>/dev/null | head -1 | sed 's/^name: *//')
+      [ -z "$SNAME" ] && SNAME="$skill"
+      SDESC=$(grep "^description:" "$SKILL_FILE" 2>/dev/null | head -1 | sed 's/^description: *//' | cut -c1-80)
+
+      # Determine type by checking content
+      if grep -qi "tool\|mcp\|server\|endpoint" "$SKILL_FILE" 2>/dev/null; then
+        TYPE="🔧 Tool"
+      elif grep -qi "agent\|worker\|orchestrat" "$SKILL_FILE" 2>/dev/null; then
+        TYPE="🤖 Agent"
+      else
+        TYPE="⚡ Skill"
       fi
+
+      LINK="https://github.com/github/awesome-copilot/tree/main/skills/${skill}"
+      NEW_LIST="${NEW_LIST}${TYPE}: ${SNAME}\n   ${SDESC}\n   ${LINK}\n\n"
     fi
   done < /tmp/awesome-skill-list.txt
 
-  MSG="🦉 New superpowers from awesome-copilot just added to Hoot!\n\n${NEW_LIST}\n${NEW} new superpowers loaded. Total: ${FINAL_COUNT}. Ready on your next message!"
+  MSG="🦉 New superpowers from awesome-copilot just added to Hoot!\n\n${NEW_LIST}${NEW} new superpowers loaded. Total: ${FINAL_COUNT}. Ready on your next message!"
   curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
     -H "Content-Type: application/json" \
-    -d "{\"chat_id\": \"${CHAT_ID}\", \"text\": \"$(echo -e "$MSG")\"}" > /dev/null
+    -d "{\"chat_id\": \"${CHAT_ID}\", \"text\": \"$(echo -e "$MSG")\", \"disable_web_page_preview\": true}" > /dev/null
 fi

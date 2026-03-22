@@ -30,20 +30,45 @@ export function createBot(): Bot {
     await next();
   });
 
-  bot.command("start", (ctx) => ctx.reply("Hoot 🦉 is online. Send me anything."));
+  bot.command("start", async (ctx) => {
+    const welcome = `🦉 Welcome to Hoot — The AI That Never Sleeps
+
+I'm your personal AI daemon. I run 24/7 on your machine, remember your preferences, and handle tasks while you're away.
+
+⚡ What I can do:
+• Answer questions — just type naturally
+• Code for you — "fix the auth bug in ~/dev/myapp"
+• Run tasks in the background — I'll notify you when done
+• Use 265+ superpowers — from pitching repos to auditing websites
+
+🎯 Try saying:
+• "What can you do?"
+• "Pitch the hoot repo"
+• "Audit example.com for conversions"
+• "Remember that I prefer TypeScript"
+
+📊 Dashboard: http://localhost:3333
+📖 GitHub: https://github.com/DUBSOpenHub/hoot
+
+Built by Gregg Cochran with the GitHub Copilot CLI. Just talk to me like a person — I'll figure out the rest.`;
+
+    await ctx.reply(welcome, { disable_web_page_preview: true });
+  });
   bot.command("help", (ctx) =>
     ctx.reply(
-      "I'm Hoot 🦉, your AI daemon.\n\n" +
-        "Just send me a message and I'll handle it.\n\n" +
+      "🦉 Hoot — Quick Reference\n\n" +
+        "Just talk to me naturally. Here's what I respond to:\n\n" +
+        "💬 Conversation — ask anything, I'll answer\n" +
+        "💻 Coding — \"fix the bug in ~/dev/myapp\"\n" +
+        "🧠 Memory — \"remember I prefer dark mode\"\n" +
+        "⚡ Superpowers — \"pitch this repo\", \"audit example.com\"\n\n" +
         "Commands:\n" +
-        "/cancel — Cancel the current message\n" +
-        "/model — Show current model\n" +
-        "/model <name> — Switch model\n" +
-        "/auto — Toggle auto model routing\n" +
-        "/memory — Show stored memories\n" +
-        "/skills — List installed skills\n" +
-        "/workers — List active worker sessions\n" +
-        "/restart — Restart Hoot 🦉\n" +
+        "/cancel — Cancel current message\n" +
+        "/model — Show or switch model\n" +
+        "/memory — Show what I remember\n" +
+        "/skills — List my 265+ superpowers\n" +
+        "/workers — Active background tasks\n" +
+        "/restart — Restart me\n" +
         "/help — Show this help"
     )
   );
