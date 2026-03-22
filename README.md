@@ -406,4 +406,4 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instruct
 
 **The magic of Hoot 🦉:** You message an owl on your phone. The owl thinks, spawns workers, writes code, runs tests, and messages you back when it's done. You walk away. You come back. The work is finished. That's it. That's the whole product. An owl that never sleeps, never forgets, and does what you tell it — from anywhere.
 
-If you can describe what you want, you can build it. 🦉
+**Why this matters:** You don't need to be a developer to build things that help you in your role. Find the leverage. Gain the velocity. The CLI is the equalizer — if you can describe what you need, you can ship it. Hoot exists because one person asked "what if I had an AI that never went offline?" and then built it. You can do the same. 🦉
