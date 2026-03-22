@@ -1,8 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #09090b;
+  --foreground: #fafafa;
+  --bg-from: #09090b;
+  --bg-to: #18181b;
+  --accent: #10b981;
+  --glow: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="purple"] {
+  --bg-from: #0f0a1e;
+  --bg-to: #1a1030;
+  --accent: #a78bfa;
+  --glow: rgba(167, 139, 250, 0.3);
+}
+
+[data-theme="forest"] {
+  --bg-from: #0a1a0c;
+  --bg-to: #0f1f12;
+  --accent: #4ade80;
+  --glow: rgba(74, 222, 128, 0.3);
 }
 
 @theme inline {
@@ -12,15 +30,136 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html { scroll-behavior: smooth; }
+
+body {
+  background: linear-gradient(145deg, var(--bg-from), var(--bg-to));
+  color: var(--foreground);
+  font-family: var(--font-geist-sans, system-ui, sans-serif);
+  min-height: 100vh;
+}
+
+/* ── Animations ───────────────────────────── */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-14px) scale(1.05); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+
+@keyframes border-glow {
+  0%, 100% {
+    border-color: rgba(16, 185, 129, 0.15);
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+  }
+  50% {
+    border-color: var(--accent, #10b981);
+    box-shadow: 0 0 25px var(--glow, rgba(16, 185, 129, 0.15));
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes data-flow {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
+
+@keyframes confetti-fall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes ascii-flash {
+  0% { opacity: 0; transform: scale(0.5); }
+  10% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+
+/* ── Utility Classes ──────────────────────── */
+
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 2s infinite; }
+.animate-border-glow { animation: border-glow 3s ease-in-out infinite; }
+.animate-ascii-flash { animation: ascii-flash 3s ease-in-out forwards; }
+
+.confetti-piece {
+  position: fixed;
+  top: -10px;
+  animation: confetti-fall 3s ease-in forwards;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* ── Architecture ─────────────────────────── */
+
+.arch-box {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(63, 63, 70, 0.5);
+}
+
+.arch-box:hover {
+  border-color: var(--accent, #10b981);
+  box-shadow: 0 0 30px var(--glow, rgba(16, 185, 129, 0.15));
+  transform: scale(1.03);
+}
+
+.arch-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0.2s;
+  pointer-events: none;
+}
+
+.arch-box:hover .arch-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.arch-line {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--glow, rgba(16, 185, 129, 0.3)),
+    var(--accent, #10b981),
+    var(--glow, rgba(16, 185, 129, 0.3)),
+    transparent
+  );
+  background-size: 100% 200%;
+  animation: data-flow 2s linear infinite;
+}
+
+/* ── Skill Cards ──────────────────────────── */
+
+.skill-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.skill-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 40px var(--glow, rgba(16, 185, 129, 0.12));
+  border-color: var(--accent, #10b981);
+}
+
+/* ── Scroll Reveal ────────────────────────── */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Scrollbar ────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #18181b; }
+::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #52525b; }
