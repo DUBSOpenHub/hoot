@@ -147,6 +147,7 @@ export function createBot(): Bot {
     };
 
     startTyping();
+    const startTime = Date.now();
 
     sendToOrchestrator(
       ctx.message.text,
@@ -154,13 +155,14 @@ export function createBot(): Bot {
       (text: string, done: boolean) => {
         if (done) {
           stopTyping();
+          const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
           void (async () => {
             try {
             const safeText = text ?? "(No response)";
             const routeResult = getLastRouteResult();
-            let indicatorSuffix = "";
+            let indicatorSuffix = `\n\n_⚡ ${elapsed}s_`;
             if (routeResult && routeResult.routerMode === "auto") {
-              indicatorSuffix = `\n\n_⚡ auto · ${routeResult.model}_`;
+              indicatorSuffix = `\n\n_⚡ ${elapsed}s · auto · ${routeResult.model}_`;
             }
             const formatted = toTelegramMarkdown(safeText) + indicatorSuffix;
             const chunks = chunkMessage(formatted);
