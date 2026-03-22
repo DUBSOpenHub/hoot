@@ -1,0 +1,60 @@
+{
+  "name": "hoot",
+  "version": "2.0.0",
+  "description": "Hoot 🦉 — a personal AI assistant for developers, built on the GitHub Copilot SDK",
+  "bin": {
+    "hoot": "dist/cli.js"
+  },
+  "files": [
+    "dist/**/*.js",
+    "skills/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "daemon": "tsx src/daemon.ts",
+    "tui": "tsx src/tui/index.ts",
+    "dev": "tsx --watch src/daemon.ts",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "copilot",
+    "telegram",
+    "orchestrator",
+    "ai",
+    "cli"
+  ],
+  "author": "DUBSOpenHub",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DUBSOpenHub/hoot.git"
+  },
+  "homepage": "https://github.com/DUBSOpenHub/hoot#readme",
+  "bugs": {
+    "url": "https://github.com/DUBSOpenHub/hoot/issues"
+  },
+  "type": "module",
+  "dependencies": {
+    "@github/copilot-sdk": "0.1.30",
+    "better-sqlite3": "^12.6.2",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "grammy": "^1.40.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.3.0",
+    "express-rate-limit": "^7.4.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}

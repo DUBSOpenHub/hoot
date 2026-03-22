@@ -1,0 +1,24 @@
+node_modules/
+dist/
+.env
+*.db
+*.db-shm
+*.db-wal
+
+# Global agent skills directory (read-only — Max reads these but never writes here)
+.agents/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+skills/blog-writer/
+
+# Dark Factory workspace
+.factory/
