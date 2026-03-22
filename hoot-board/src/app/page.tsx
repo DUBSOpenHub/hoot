@@ -2,62 +2,140 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 
-/* ─────────────────────────────────────────────────────────────
+/* ---------------------------------------------
    Data
-   ───────────────────────────────────────────────────────────── */
+   --------------------------------------------- */
 
-const SUBTITLES = [
+const TYPING_PHRASES = [
   "The AI That Never Sleeps",
-  "The Owl That Ships Code",
   "Your Feathered DevOps Lead",
   "130 Agents In A Trenchcoat",
-  "Hoot Hoot Ship Ship",
-  "Never Sleeps Always Ships",
+  "Ships Code While You Sleep",
 ];
 
-interface SkillDef {
-  name: string;
-  category: string;
-  emoji: string;
-  desc: string;
-  link: string;
-}
-
-const SKILLS: SkillDef[] = [
-  { name: "Dark Factory", category: "Build", emoji: "🏭", desc: "6-agent sealed-envelope build pipeline", link: "https://github.com/DUBSOpenHub/dark-factory" },
-  { name: "Havoc Hackathon", category: "Orchestration", emoji: "🏟️", desc: "Multi-model tournament arena", link: "https://github.com/DUBSOpenHub/havoc-hackathon" },
-  { name: "Stampede", category: "Orchestration", emoji: "⚡", desc: "20 parallel agents in tmux", link: "https://github.com/DUBSOpenHub/terminal-stampede" },
-  { name: "Dispatch", category: "Orchestration", emoji: "📡", desc: "Cross-terminal multi-agent dispatch", link: "https://github.com/DUBSOpenHub/copilot-skills" },
-  { name: "Pitch Master", category: "Productivity", emoji: "🎤", desc: "60-second YC pitch generator", link: "https://github.com/DUBSOpenHub/copilot-skills" },
-  { name: "Design Auditor", category: "Intelligence", emoji: "🔍", desc: "URL conversion audit", link: "https://github.com/DUBSOpenHub/design-auditor" },
-  { name: "M365 Easy Button", category: "Productivity", emoji: "🟢", desc: "Google → Microsoft 365 translator", link: "https://github.com/DUBSOpenHub/m365-easy-button" },
-  { name: "OctoFund", category: "Intelligence", emoji: "🐙", desc: "OSS funding allocator", link: "https://github.com/DUBSOpenHub/copilot-skills" },
-  { name: "Slack Context", category: "Productivity", emoji: "💬", desc: "Read Slack threads", link: "https://github.com/DUBSOpenHub/copilot-skills" },
-  { name: "Outlook Mail", category: "Productivity", emoji: "📧", desc: "Email with approval gate", link: "#" },
-  { name: "CLI Mastery", category: "Training", emoji: "🎓", desc: "Copilot CLI interactive training", link: "https://github.com/DUBSOpenHub/copilot-cli-mastery" },
-  { name: "First Light", category: "Training", emoji: "✨", desc: "Build your first agent in 5 min", link: "https://github.com/DUBSOpenHub/copilot-first-light" },
-  { name: "CLI Quickstart", category: "Training", emoji: "🚀", desc: "Interactive CLI tutor", link: "https://github.com/DUBSOpenHub/copilot-cli-quickstart" },
-  { name: "First Agent", category: "Training", emoji: "🎓", desc: "Non-dev agent building", link: "https://github.com/DUBSOpenHub/copilot-skills" },
-  { name: "CodeQL Mastery", category: "Intelligence", emoji: "🛡️", desc: "Security scanning expert", link: "https://github.com/DUBSOpenHub/copilot-skills" },
-  { name: "Headcount Zero", category: "Build", emoji: "👔", desc: "AI executive team sim", link: "https://github.com/DUBSOpenHub/headcount-zero" },
-  { name: "GDoc Converter", category: "Productivity", emoji: "📄", desc: "Google Docs → Office", link: "https://github.com/DUBSOpenHub/copilot-skills" },
-  { name: "Swarm", category: "Orchestration", emoji: "🐝", desc: "Multi-agent swarm coordination", link: "https://github.com/DUBSOpenHub/copilot-skills" },
-  { name: "Agent Company", category: "Build", emoji: "🏢", desc: "Full company agent simulation", link: "https://github.com/DUBSOpenHub/copilot-skills" },
-  { name: "SOSS Template", category: "Training", emoji: "🛡️", desc: "Security training template", link: "https://github.com/DUBSOpenHub/copilot-skills" },
+const SKILL_CATEGORIES = [
+  {
+    icon: "\u{1F3D7}\uFE0F",
+    title: "Build",
+    tagClass: "tag-purple",
+    glowColor: "rgba(124,58,237,.15)",
+    skills: ["Dark Factory", "Headcount Zero", "Agent Company"],
+  },
+  {
+    icon: "\u26A1",
+    title: "Orchestration",
+    tagClass: "tag-blue",
+    glowColor: "rgba(37,99,235,.15)",
+    skills: ["Stampede", "Havoc Hackathon", "Dispatch", "Swarm"],
+  },
+  {
+    icon: "\u{1F4CA}",
+    title: "Productivity",
+    tagClass: "tag-cyan",
+    glowColor: "rgba(6,182,212,.15)",
+    skills: [
+      "Pitch Master",
+      "M365 Easy Button",
+      "Slack Context",
+      "Outlook Mail",
+      "GDoc Converter",
+    ],
+  },
+  {
+    icon: "\u{1F393}",
+    title: "Training",
+    tagClass: "tag-green",
+    glowColor: "rgba(16,185,129,.15)",
+    skills: [
+      "First Light",
+      "CLI Quickstart",
+      "CLI Mastery",
+      "First Agent",
+      "CodeQL Mastery",
+    ],
+  },
+  {
+    icon: "\u{1F50D}",
+    title: "Intelligence",
+    tagClass: "tag-purple",
+    glowColor: "rgba(124,58,237,.15)",
+    skills: ["Design Auditor", "OctoFund", "SOSS Template"],
+  },
 ];
 
-const CATEGORIES = ["All", "Orchestration", "Build", "Productivity", "Intelligence", "Training"];
-
-const MILESTONES = [
-  { icon: "��️", when: "Design", title: "Havoc Hackathon", desc: "14 AI models competed in tournament elimination to design the architecture" },
-  { icon: "🏭", when: "Build", title: "Dark Factory", desc: "6 specialist agents built it through checkpoint-gated sealed-envelope testing" },
-  { icon: "🔧", when: "Ship Night", title: "Tonight", desc: "Copilot CLI wired 20 skills, fixed 2 bugs, and shipped to Telegram in one session" },
-  { icon: "📱", when: "Now", title: "Always On", desc: "Hoot runs 24/7 — talk to it from your phone, terminal, or browser" },
+const PROJECTS = [
+  {
+    icon: "\u{1F4AC}",
+    title: "Telegram Bot",
+    desc: "Message Hoot from your phone. Dispatch coding tasks, get notified when done.",
+    gradient: "linear-gradient(135deg,#1a0a3b,#0d1f4a)",
+    radial:
+      "radial-gradient(circle at 30% 60%,rgba(124,58,237,.25),transparent 60%)",
+    tags: [
+      { label: "grammY", cls: "tag-purple" },
+      { label: "TypeScript", cls: "tag-blue" },
+      { label: "Copilot SDK", cls: "tag-cyan" },
+    ],
+  },
+  {
+    icon: "\u26A1",
+    title: "Worker Pool",
+    desc: "Up to 5 concurrent AI sessions. Pre-warmed. Checkout/return pattern.",
+    gradient: "linear-gradient(135deg,#081c1c,#0a2030)",
+    radial:
+      "radial-gradient(circle at 70% 40%,rgba(6,182,212,.2),transparent 60%)",
+    tags: [
+      { label: "Background Tasks", cls: "tag-cyan" },
+      { label: "Circuit Breaker", cls: "tag-blue" },
+      { label: "SQLite", cls: "tag-green" },
+    ],
+  },
+  {
+    icon: "\u{1F9E9}",
+    title: "Skill System",
+    desc: "Drop a SKILL.md, gain a capability. 20 skills loaded, hot-reload on change.",
+    gradient: "linear-gradient(135deg,#0a1a0c,#0d2818)",
+    radial:
+      "radial-gradient(circle at 50% 50%,rgba(16,185,129,.2),transparent 60%)",
+    tags: [
+      { label: "Markdown", cls: "tag-green" },
+      { label: "Extensible", cls: "tag-cyan" },
+      { label: "Community", cls: "tag-purple" },
+    ],
+  },
 ];
 
-const KONAMI_SEQ = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+const TIMELINE = [
+  {
+    icon: "\u{1F3DF}\uFE0F",
+    when: "14 AI models competed",
+    title: "Havoc Hackathon",
+    desc: "Tournament elimination produced the winning architecture and PRD.",
+  },
+  {
+    icon: "\u{1F3ED}",
+    when: "6 specialist agents",
+    title: "Dark Factory",
+    desc: "Sealed-envelope testing built the daemon through checkpoint-gated pipeline.",
+  },
+  {
+    icon: "\u26A1",
+    when: "20 skills, 2 bug fixes",
+    title: "Wiring Night",
+    desc: "Copilot CLI wired all skills, fixed priority queue bug, shipped to Telegram.",
+  },
+  {
+    icon: "\u{1F989}",
+    when: "Always on",
+    title: "Hoot Goes Live",
+    desc: "Running 24/7 via launchd, auto-restart, 3-second responses from your phone.",
+  },
+];
 
-const THEMES = ["midnight", "purple", "forest"];
+const KONAMI_SEQ = [
+  "ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown",
+  "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a",
+];
 
 const ASCII_OWL = `    ._____.
     | o o |
@@ -67,61 +145,68 @@ const ASCII_OWL = `    ._____.
    /|     |\\
   / |     | \\
  /__|_____|__\\
-  HOOT HOOT! 🦉`;
+  HOOT HOOT! \u{1F989}`;
 
-const ARCH_CHANNELS = [
-  { emoji: "💬", label: "Telegram", tip: "Chat with Hoot from anywhere — primary conversational channel" },
-  { emoji: "🖥️", label: "TUI", tip: "Terminal interface for power users — direct CLI interaction" },
-  { emoji: "🌐", label: "HTTP API", tip: "RESTful API on :7777 — status, skills, metrics, memory" },
-];
-
-const ARCH_BOTTOM = [
-  { emoji: "🔧", label: "Skills", tip: "20 pluggable capabilities — from Pitch Master to Dark Factory" },
-  { emoji: "💾", label: "Memory", tip: "Persistent memory store — context, preferences, conversation history" },
-  { emoji: "👷", label: "Workers", tip: "Autonomous agents that execute tasks in isolated environments" },
-];
-
-/* ─────────────────────────────────────────────────────────────
-   Types
-   ───────────────────────────────────────────────────────────── */
-
-interface HootStatus {
-  status: string;
-  workers: { name: string; status: string; workingDir: string }[];
-  circuitBreakers: Record<string, { state: string; failures: number }>;
-}
-
-/* ─────────────────────────────────────────────────────────────
+/* ---------------------------------------------
    Hooks
-   ───────────────────────────────────────────────────────────── */
+   --------------------------------------------- */
 
-function useCounter(target: number, duration = 2000): number {
-  const [count, setCount] = useState(0);
-  const raf = useRef(0);
+function useTypingEffect(phrases: string[]) {
+  const [text, setText] = useState("");
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    let start: number | null = null;
-    const step = (ts: number) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / duration, 1);
-      setCount(Math.floor((1 - Math.pow(1 - p, 3)) * target));
-      if (p < 1) raf.current = requestAnimationFrame(step);
-    };
-    raf.current = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf.current);
-  }, [target, duration]);
+    const phrase = phrases[phraseIdx];
+    let timeout: ReturnType<typeof setTimeout>;
 
-  return count;
+    if (!deleting) {
+      if (charIdx < phrase.length) {
+        timeout = setTimeout(() => {
+          setText(phrase.slice(0, charIdx + 1));
+          setCharIdx(charIdx + 1);
+        }, 80);
+      } else {
+        timeout = setTimeout(() => setDeleting(true), 1800);
+      }
+    } else {
+      if (charIdx > 0) {
+        timeout = setTimeout(() => {
+          setText(phrase.slice(0, charIdx - 1));
+          setCharIdx(charIdx - 1);
+        }, 45);
+      } else {
+        setDeleting(false);
+        setPhraseIdx((phraseIdx + 1) % phrases.length);
+        timeout = setTimeout(() => {}, 400);
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [charIdx, deleting, phraseIdx, phrases]);
+
+  return text;
 }
 
-/* ─────────────────────────────────────────────────────────────
+/* ---------------------------------------------
    Sub-components
-   ───────────────────────────────────────────────────────────── */
+   --------------------------------------------- */
 
 function Confetti() {
-  const colors = ["#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#a78bfa", "#ec4899", "#06b6d4"];
+  const colors = [
+    "#7c3aed", "#2563eb", "#06b6d4", "#10b981",
+    "#f59e0b", "#ec4899", "#a78bfa",
+  ];
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 9999,
+      }}
+    >
       {Array.from({ length: 60 }, (_, i) => (
         <div
           key={i}
@@ -141,101 +226,67 @@ function Confetti() {
   );
 }
 
-function AnimatedStat({ label, value, icon }: { label: string; value: number; icon: string }) {
-  const displayed = useCounter(value);
-  return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-5 backdrop-blur-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-500 font-medium">{label}</p>
-        <span className="text-xl">{icon}</span>
-      </div>
-      <p className="mt-2 text-3xl font-bold font-mono">{displayed}</p>
-    </div>
-  );
-}
-
-function ArchBox({ emoji, label, tip, className = "" }: { emoji: string; label: string; tip: string; className?: string }) {
-  return (
-    <div className={`arch-box relative rounded-xl bg-zinc-900/80 backdrop-blur-sm px-4 py-3 sm:px-5 sm:py-4 text-center cursor-default ${className}`}>
-      <span className="text-2xl">{emoji}</span>
-      <p className="text-sm font-semibold mt-1">{label}</p>
-      <div className="arch-tooltip absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-zinc-800 text-xs text-zinc-300 rounded-lg px-3 py-2 w-52 z-20 shadow-xl border border-zinc-700">
-        {tip}
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────
+/* ---------------------------------------------
    Main Page
-   ───────────────────────────────────────────────────────────── */
+   --------------------------------------------- */
 
 export default function Home() {
-  const [isOnline, setIsOnline] = useState(false);
-  const [workerCount, setWorkerCount] = useState(0);
-  const [skillCount, setSkillCount] = useState(20);
-  const [uptime, setUptime] = useState(0);
-  const [subtitleIdx, setSubtitleIdx] = useState(0);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [showAscii, setShowAscii] = useState(false);
-  const [themeIdx, setThemeIdx] = useState(0);
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [footerHover, setFooterHover] = useState(false);
-
+  const mainRef = useRef<HTMLDivElement>(null);
   const owlTimes = useRef<number[]>([]);
   const konamiBuffer = useRef<string[]>([]);
-  const mainRef = useRef<HTMLDivElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
 
-  /* ── Fetch daemon status ─────────────────── */
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showAscii, setShowAscii] = useState(false);
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showBackTop, setShowBackTop] = useState(false);
+
+  const typedText = useTypingEffect(TYPING_PHRASES);
+
+  /* Scroll effects */
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("hoot-token") || "" : "";
-    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-
-    const check = async () => {
-      try {
-        const r = await fetch("http://127.0.0.1:7777/status", { headers });
-        if (r.ok) {
-          const d: HootStatus = await r.json();
-          setIsOnline(true);
-          setWorkerCount(d.workers?.length ?? 0);
-        } else setIsOnline(false);
-      } catch {
-        setIsOnline(false);
-      }
-      try {
-        const r = await fetch("http://127.0.0.1:7777/skills", { headers });
-        if (r.ok) {
-          const d = await r.json();
-          if (Array.isArray(d) && d.length) setSkillCount(d.length);
-        }
-      } catch { /* daemon may be offline */ }
+    const onScroll = () => {
+      setNavScrolled(window.scrollY > 20);
+      setShowBackTop(window.scrollY > 300);
     };
-
-    check();
-    const iv = setInterval(() => { check(); setUptime(p => p + 5); }, 5000);
-    return () => clearInterval(iv);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  /* ── Theme switcher ──────────────────────── */
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", THEMES[themeIdx]);
-  }, [themeIdx]);
-
-  /* ── Scroll reveal observer ──────────────── */
+  /* Scroll-reveal observer */
   useEffect(() => {
     const obs = new IntersectionObserver(
-      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); }),
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) e.target.classList.add("visible");
+        }),
+      { threshold: 0.12 },
     );
-    mainRef.current?.querySelectorAll(".reveal:not(.visible)").forEach(el => obs.observe(el));
+    mainRef.current
+      ?.querySelectorAll(".reveal")
+      .forEach((el) => obs.observe(el));
     return () => obs.disconnect();
-  }, [activeCategory]);
+  }, []);
 
-  /* ── Konami code ─────────────────────────── */
+  /* Cursor glow */
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (cursorRef.current) {
+        cursorRef.current.style.left = e.clientX + "px";
+        cursorRef.current.style.top = e.clientY + "px";
+      }
+    };
+    document.addEventListener("mousemove", onMove, { passive: true });
+    return () => document.removeEventListener("mousemove", onMove);
+  }, []);
+
+  /* Konami code */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       konamiBuffer.current.push(e.key);
-      if (konamiBuffer.current.length > KONAMI_SEQ.length) konamiBuffer.current.shift();
+      if (konamiBuffer.current.length > KONAMI_SEQ.length)
+        konamiBuffer.current.shift();
       if (konamiBuffer.current.join(",") === KONAMI_SEQ.join(",")) {
         setShowAscii(true);
         konamiBuffer.current = [];
@@ -246,10 +297,12 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  /* ── Owl click → confetti ────────────────── */
+  /* 5x owl click -> confetti */
   const handleOwlClick = useCallback(() => {
     const now = Date.now();
-    owlTimes.current = [...owlTimes.current, now].filter(t => now - t < 2000);
+    owlTimes.current = [...owlTimes.current, now].filter(
+      (t) => now - t < 2000,
+    );
     if (owlTimes.current.length >= 5) {
       owlTimes.current = [];
       setShowConfetti(true);
@@ -257,299 +310,460 @@ export default function Home() {
     }
   }, []);
 
-  const fmtUp = (s: number) => {
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    if (h > 0) return `${h}h ${m}m`;
-    if (m > 0) return `${m}m ${s % 60}s`;
-    return `${s}s`;
-  };
-
-  const filtered = activeCategory === "All" ? SKILLS : SKILLS.filter(s => s.category === activeCategory);
-
-  /* ── Render ──────────────────────────────── */
   return (
-    <div ref={mainRef} className="min-h-screen text-zinc-100 font-sans relative overflow-x-hidden">
+    <div ref={mainRef}>
       {showConfetti && <Confetti />}
 
       {showAscii && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none bg-black/60">
-          <pre className="animate-ascii-flash text-emerald-400 text-xl sm:text-3xl md:text-4xl font-mono font-bold text-center whitespace-pre">
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            pointerEvents: "none",
+            background: "rgba(0,0,0,.6)",
+          }}
+        >
+          <pre
+            className="animate-ascii-flash"
+            style={{
+              color: "#10b981",
+              fontSize: "clamp(1rem,3vw,2rem)",
+              fontFamily: "'JetBrains Mono', monospace",
+              fontWeight: 700,
+              textAlign: "center",
+              whiteSpace: "pre",
+            }}
+          >
             {ASCII_OWL}
           </pre>
         </div>
       )}
 
-      {/* Theme toggle moon */}
+      {/* Cursor glow */}
+      <div ref={cursorRef} className="cursor-glow" aria-hidden="true" />
+
+      {/* Back to top */}
       <button
-        onClick={() => setThemeIdx(i => (i + 1) % THEMES.length)}
-        className="fixed top-4 right-4 z-40 text-zinc-700 hover:text-zinc-300 transition-colors text-xl cursor-pointer"
-        title={`Theme: ${THEMES[themeIdx]}`}
-        aria-label="Toggle theme"
+        className={`back-top ${showBackTop ? "visible" : ""}`}
+        aria-label="Back to top"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       >
-        🌙
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+        >
+          <path d="M18 15l-6-6-6 6" />
+        </svg>
       </button>
 
-      {/* ───────────── HERO ───────────── */}
-      <section className="relative px-6 pt-20 pb-14 sm:pt-28 sm:pb-20 text-center">
-        <div className="absolute top-8 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
-
-        <div
-          className="animate-float text-8xl sm:text-9xl cursor-pointer select-none relative z-10"
-          onClick={handleOwlClick}
-          role="button"
-          tabIndex={0}
-          aria-label="Click the owl 5 times fast for a surprise"
-        >
-          🦉
-        </div>
-
-        <h1 className="mt-6 text-5xl sm:text-7xl font-extrabold tracking-tight bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-transparent">
-          Hoot
-        </h1>
-
+      {/* NAV */}
+      <nav className={`hoot-nav ${navScrolled ? "scrolled" : ""}`}>
+        <a href="#hero" className="nav-logo">
+          Hoot {"\u{1F989}"}
+        </a>
+        <ul className={`nav-links ${mobileMenuOpen ? "open" : ""}`}>
+          <li>
+            <a href="#skills" onClick={() => setMobileMenuOpen(false)}>
+              Skills
+            </a>
+          </li>
+          <li>
+            <a href="#architecture" onClick={() => setMobileMenuOpen(false)}>
+              Architecture
+            </a>
+          </li>
+          <li>
+            <a href="#journey" onClick={() => setMobileMenuOpen(false)}>
+              Journey
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://github.com/DUBSOpenHub/hoot"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              GitHub
+            </a>
+          </li>
+        </ul>
         <button
-          onClick={() => setSubtitleIdx(i => (i + 1) % SUBTITLES.length)}
-          className="mt-3 text-lg sm:text-xl text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer block mx-auto"
+          className={`nav-burger ${mobileMenuOpen ? "open" : ""}`}
+          aria-label="Toggle navigation"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
-          {SUBTITLES[subtitleIdx]}
+          <span />
+          <span />
+          <span />
         </button>
+      </nav>
 
-        <p className="mt-4 max-w-xl mx-auto text-sm sm:text-base text-zinc-500 leading-relaxed">
-          Personal AI daemon with pluggable backends. Ships with Copilot SDK — swap in Ollama, Anthropic, or OpenAI via AIProvider. Runs 24/7, remembers everything, reaches you on Telegram.
-        </p>
+      {/* HERO */}
+      <section id="hero" className="hero-section">
+        <div className="orb orb-1" aria-hidden="true" />
+        <div className="orb orb-2" aria-hidden="true" />
+        <div className="orb orb-3" aria-hidden="true" />
+        <div className="grid-lines" aria-hidden="true" />
 
-        <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
-          <span
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${
-              isOnline ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
-            }`}
+        <div className="hero-content fade-in-up">
+          <div className="hero-badge">
+            <span className="badge-dot" aria-hidden="true" />
+            Always Online {"\u00B7"} Personal AI Daemon
+          </div>
+
+          <h1
+            className="hero-name"
+            onClick={handleOwlClick}
+            role="button"
+            tabIndex={0}
+            aria-label="Click 5 times fast for a surprise"
           >
-            <span
-              className={`h-2.5 w-2.5 rounded-full ${
-                isOnline ? "bg-emerald-400 animate-pulse-glow" : "bg-red-400"
-              }`}
-            />
-            {isOnline ? "Online" : "Offline"}
-          </span>
-          <a
-            href="https://t.me/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-500 px-6 py-2 text-sm font-semibold text-white transition-colors"
-          >
-            Talk to Hoot →
-          </a>
-        </div>
-      </section>
+            <span>Hoot</span>
+          </h1>
 
-      {/* ───────────── LIVE STATS ───────────── */}
-      <section className="px-6 pb-14">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-5 backdrop-blur-sm">
-            <p className="text-sm text-zinc-500 font-medium">Status</p>
-            <p className="mt-2 text-2xl font-bold">{isOnline ? "🟢 Live" : "🔴 Down"}</p>
-          </div>
-          <AnimatedStat label="Workers Active" value={workerCount} icon="⚡" />
-          <AnimatedStat label="Skills Loaded" value={skillCount} icon="🧠" />
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-5 backdrop-blur-sm">
-            <p className="text-sm text-zinc-500 font-medium">Uptime</p>
-            <p className="mt-2 text-2xl font-bold font-mono">{fmtUp(uptime)}</p>
-          </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 p-5 backdrop-blur-sm col-span-2 sm:col-span-1">
-            <p className="text-sm text-zinc-500 font-medium">Model</p>
-            <p className="mt-2 text-lg font-bold">Claude Sonnet</p>
-          </div>
-        </div>
-      </section>
-
-      {/* ───────────── ARCHITECTURE ───────────── */}
-      <section className="px-6 pb-16 reveal">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-10">Architecture</h2>
-
-          {/* Channels */}
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-6">
-            {ARCH_CHANNELS.map(n => <ArchBox key={n.label} {...n} />)}
+          <div className="hero-typing-wrap">
+            <span className="typed-text">{typedText}</span>
+            <span className="cursor-blink" />
           </div>
 
-          {/* Line down */}
-          <div className="flex justify-center py-1"><div className="arch-line w-0.5 h-10" /></div>
-
-          {/* Message Bus */}
-          <div className="flex justify-center">
-            <ArchBox emoji="📨" label="Message Bus" tip="Routes messages between channels and orchestrator with queue management" className="w-52 sm:w-60" />
-          </div>
-
-          <div className="flex justify-center py-1"><div className="arch-line w-0.5 h-10" /></div>
-
-          {/* Orchestrator */}
-          <div className="flex justify-center">
-            <ArchBox emoji="🧠" label="Orchestrator" tip="The brain — routes tasks to the right worker, manages context and state" className="w-52 sm:w-60 animate-border-glow" />
-          </div>
-
-          <div className="flex justify-center py-1"><div className="arch-line w-0.5 h-10" /></div>
-
-          {/* Bottom row */}
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-6">
-            {ARCH_BOTTOM.map(n => <ArchBox key={n.label} {...n} />)}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────────── SKILLS SHOWCASE ───────────── */}
-      <section className="px-6 pb-16">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2 reveal">Skills Arsenal</h2>
-          <p className="text-zinc-500 text-center mb-8 reveal">20 capabilities. Zero hand-written code. All shipped by AI.</p>
-
-          {/* Filter bar */}
-          <div className="flex flex-wrap justify-center gap-2 mb-8 reveal">
-            {CATEGORIES.map(c => (
-              <button
-                key={c}
-                onClick={() => setActiveCategory(c)}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all cursor-pointer ${
-                  activeCategory === c
-                    ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20"
-                    : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-
-          {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map((s, i) => (
-              <div
-                key={s.name}
-                className="skill-card group rounded-xl border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-5 reveal"
-                style={{ transitionDelay: `${i * 40}ms` }}
-              >
-                <div className="flex items-start justify-between">
-                  <span className="text-3xl">{s.emoji}</span>
-                  <span className={`text-xs font-medium rounded-full px-2.5 py-0.5 ${catColor(s.category)}`}>
-                    {s.category}
-                  </span>
-                </div>
-                <h3 className="mt-3 font-semibold text-zinc-100">{s.name}</h3>
-                <p className="mt-1 text-sm text-zinc-500 leading-relaxed">{s.desc}</p>
-                <a
-                  href={s.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-block text-sm text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  Learn more →
-                </a>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ───────────── HOW IT WAS BUILT ───────────── */}
-      <section className="px-6 pb-20">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-2 reveal">How Hoot Was Built</h2>
-          <p className="text-zinc-500 text-center mb-12 reveal">
-            No IDE. No hand-written code. Just a human describing what they want.
+          <p className="hero-desc">
+            Personal AI daemon with pluggable backends. Ships with Copilot
+            SDK {"\u2014"} swap in Ollama, Anthropic, or OpenAI. Runs 24/7,
+            remembers everything, reaches you on Telegram.
           </p>
 
-          <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-5 sm:left-1/2 top-0 bottom-0 w-px bg-zinc-800 sm:-translate-x-px" />
-
-            {MILESTONES.map((m, i) => (
-              <div
-                key={m.title}
-                className={`reveal relative flex items-start mb-14 ${
-                  i % 2 === 0 ? "sm:flex-row" : "sm:flex-row-reverse"
-                }`}
-                style={{ transitionDelay: `${i * 150}ms` }}
+          <div className="hero-actions">
+            <a
+              href="https://github.com/DUBSOpenHub/hoot"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
               >
-                {/* Dot */}
-                <div className="absolute left-5 sm:left-1/2 w-3 h-3 bg-emerald-500 rounded-full -translate-x-1/2 mt-6 z-10 shadow-lg shadow-emerald-500/30" />
-
-                {/* Card */}
-                <div className={`ml-10 sm:ml-0 sm:w-5/12 ${i % 2 === 0 ? "sm:pr-12 sm:text-right" : "sm:pl-12"}`}>
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-6">
-                    <span className="text-3xl">{m.icon}</span>
-                    <p className="text-xs text-emerald-400 font-semibold mt-2 uppercase tracking-wider">{m.when}</p>
-                    <h3 className="text-lg font-bold mt-1">{m.title}</h3>
-                    <p className="text-sm text-zinc-400 mt-2 leading-relaxed">{m.desc}</p>
-                  </div>
-                </div>
-
-                <div className="hidden sm:block sm:w-5/12" />
-              </div>
-            ))}
+                <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z" />
+              </svg>
+              View on GitHub {"\u2192"}
+            </a>
+            <a href="#" className="btn-outline">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                aria-hidden="true"
+              >
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+              Read the Docs
+            </a>
           </div>
+        </div>
+
+        <div className="scroll-indicator" aria-hidden="true">
+          <div className="scroll-line" />
+          <span>SCROLL</span>
         </div>
       </section>
 
-      {/* ───────────── FOOTER ───────────── */}
-      <footer className="border-t border-zinc-800/50 px-6 py-12">
-        <div className="max-w-4xl mx-auto text-center">
-          <div
-            className="inline-block cursor-default"
-            onMouseEnter={() => setFooterHover(true)}
-            onMouseLeave={() => setFooterHover(false)}
-          >
-            <p className="text-zinc-500">
-              Built by{" "}
-              <span className="text-zinc-300 font-semibold">Gregg Cochran</span>{" "}
-              — a non-technical builder who shipped this with the GitHub Copilot CLI and ~130 AI agents
+      {/* ABOUT / STATS */}
+      <section id="about" className="hoot-section alt-bg">
+        <div className="about-grid">
+          <div className="reveal">
+            <span className="section-label">About</span>
+            <h2 className="section-title">
+              One daemon to
+              <br />
+              <em>rule them all</em>
+            </h2>
+            <p className="section-sub">
+              Hoot is a personal AI daemon that runs 24/7 on your Mac. It
+              orchestrates up to 5 concurrent AI workers, routes messages
+              from Telegram, and remembers every conversation in a local
+              SQLite store.
             </p>
 
-            <div
-              className={`overflow-hidden transition-all duration-500 ${
-                footerHover ? "max-h-44 opacity-100 mt-4" : "max-h-0 opacity-0"
-              }`}
-            >
-              <p className="text-sm text-zinc-600 leading-relaxed max-w-lg mx-auto">
-                Every line of code in this project was written by AI. Gregg described what he wanted
-                in plain English, and ~130 AI agents across tools like Havoc Hackathon, Dark Factory,
-                and Stampede collaborated to architect, build, test, and ship it. This is what happens
-                when you remove the barrier between ideas and execution.
-              </p>
+            <div className="about-stats">
+              <div className="stat-card">
+                <div className="stat-number">20</div>
+                <div className="stat-label">Skills Loaded</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-number">5</div>
+                <div className="stat-label">Max Workers</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-number">3s</div>
+                <div className="stat-label">Avg Response</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-number">24/7</div>
+                <div className="stat-label">Uptime</div>
+              </div>
             </div>
           </div>
 
-          <div className="mt-6 flex justify-center gap-6 text-sm">
-            <a href="https://github.com/DUBSOpenHub" target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-zinc-300 transition-colors">
-              GitHub
-            </a>
-            <a href="https://docs.github.com/en/copilot/github-copilot-in-the-cli" target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-zinc-300 transition-colors">
-              Copilot CLI Docs
-            </a>
-            <a href="https://github.com/DUBSOpenHub" target="_blank" rel="noopener noreferrer" className="text-zinc-600 hover:text-zinc-300 transition-colors">
-              DUBSOpenHub
-            </a>
+          <div className="reveal" style={{ transitionDelay: ".15s" }}>
+            <div className="code-block">
+              <div className="code-titlebar">
+                <span className="dot dot-r" aria-hidden="true" />
+                <span className="dot dot-y" aria-hidden="true" />
+                <span className="dot dot-g" aria-hidden="true" />
+                <span className="code-file">hoot.config.ts</span>
+              </div>
+              <div className="code-body">
+                <pre>
+                  <span className="cm">{"// hoot.config"}</span>
+                  {"\n"}
+                  <span className="kw">const</span>{" "}
+                  <span className="fn">hoot</span>{" "}
+                  <span className="br">=</span>{" "}
+                  <span className="br">{"{"}</span>
+                  {"\n"}
+                  {"  "}model<span className="br">:</span>{" "}
+                  <span className="str">{'"gpt-4.1"'}</span>
+                  <span className="br">,</span>
+                  {"\n"}
+                  {"  "}channels<span className="br">:</span>{" "}
+                  <span className="br">[</span>
+                  <span className="str">{'"telegram"'}</span>
+                  <span className="br">,</span>{" "}
+                  <span className="str">{'"tui"'}</span>
+                  <span className="br">,</span>{" "}
+                  <span className="str">{'"http"'}</span>
+                  <span className="br">],</span>
+                  {"\n"}
+                  {"  "}skills<span className="br">:</span>{" "}
+                  <span className="num">20</span>
+                  <span className="br">,</span>
+                  {"\n"}
+                  {"  "}workers<span className="br">:</span>{" "}
+                  <span className="br">{"{"}</span>{" "}
+                  warm<span className="br">:</span>{" "}
+                  <span className="num">2</span>
+                  <span className="br">,</span>{" "}
+                  max<span className="br">:</span>{" "}
+                  <span className="num">5</span>{" "}
+                  <span className="br">{"}"}</span>
+                  <span className="br">,</span>
+                  {"\n"}
+                  {"  "}memory<span className="br">:</span>{" "}
+                  <span className="str">{'"sqlite"'}</span>
+                  <span className="br">,</span>
+                  {"\n"}
+                  {"  "}autoRoute<span className="br">:</span>{" "}
+                  <span className="num">false</span>
+                  <span className="br">,</span>
+                  {"\n"}
+                  {"  "}timeout<span className="br">:</span>{" "}
+                  <span className="num">30_000</span>
+                  <span className="br">,</span>
+                  {"\n"}
+                  <span className="br">{"}"}</span>
+                  <span className="br">;</span>
+                </pre>
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
 
-          <p className="mt-8 text-zinc-700 text-sm">
-            If you can describe what you want, you can build it. 🦉
+      {/* SKILLS */}
+      <section id="skills" className="hoot-section">
+        <div className="skills-header reveal">
+          <span className="section-label">Capabilities</span>
+          <h2 className="section-title">
+            20 Skills, <em>One Owl</em>
+          </h2>
+          <p className="section-sub">
+            Drop a SKILL.md into the skills folder and Hoot picks it up on
+            the next message.
           </p>
         </div>
+
+        <div className="skills-grid">
+          {SKILL_CATEGORIES.map((cat, i) => (
+            <div
+              key={cat.title}
+              className="skill-category reveal"
+              style={{ transitionDelay: `${i * 0.05}s` }}
+            >
+              <div
+                className="skill-category-icon"
+                aria-hidden="true"
+                style={{ background: cat.glowColor }}
+              >
+                {cat.icon}
+              </div>
+              <h3>{cat.title}</h3>
+              <div className="skill-tags">
+                {cat.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className={`skill-tag ${cat.tagClass}`}
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ARCHITECTURE / PROJECTS */}
+      <section id="architecture" className="hoot-section alt-bg">
+        <div
+          style={{ maxWidth: 1100, margin: "0 auto 4rem" }}
+          className="reveal"
+        >
+          <span className="section-label">Architecture</span>
+          <h2 className="section-title">
+            How Hoot <em>works</em>
+          </h2>
+          <p className="section-sub">
+            Three pillars make up the daemon {"\u2014"} a Telegram bot, a
+            worker pool, and a pluggable skill system.
+          </p>
+        </div>
+
+        <div className="projects-grid">
+          {PROJECTS.map((p, i) => (
+            <div
+              key={p.title}
+              className="project-card reveal"
+              style={{ transitionDelay: `${i * 0.05}s` }}
+            >
+              <div
+                className="project-card-header"
+                style={{ background: p.gradient }}
+              >
+                <div className="project-icon" aria-hidden="true">
+                  {p.icon}
+                </div>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: p.radial,
+                  }}
+                />
+              </div>
+              <div className="project-card-body">
+                <div className="project-tags">
+                  {p.tags.map((t) => (
+                    <span
+                      key={t.label}
+                      className={`project-tag ${t.cls}`}
+                    >
+                      {t.label}
+                    </span>
+                  ))}
+                </div>
+                <h3>{p.title}</h3>
+                <p>{p.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* JOURNEY / TIMELINE */}
+      <section id="journey" className="hoot-section">
+        <div
+          style={{ maxWidth: 700, margin: "0 auto 4rem" }}
+          className="reveal"
+        >
+          <span className="section-label">The Journey</span>
+          <h2 className="section-title">
+            From Hackathon <em>to Hoot</em>
+          </h2>
+          <p className="section-sub">
+            How a non-technical builder shipped a production AI daemon in a
+            single weekend.
+          </p>
+        </div>
+
+        <div className="timeline">
+          <div className="timeline-line" aria-hidden="true" />
+          {TIMELINE.map((entry, i) => (
+            <div
+              key={entry.title}
+              className="timeline-entry reveal"
+              style={{ transitionDelay: `${i * 0.15}s` }}
+            >
+              <div className="timeline-dot" aria-hidden="true" />
+              <div className="timeline-content">
+                <div className="timeline-when">{entry.when}</div>
+                <div className="timeline-title">
+                  {entry.icon} {entry.title}
+                </div>
+                <div className="timeline-desc">{entry.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="hoot-footer">
+        <p style={{ fontSize: "1.6rem" }}>
+          Built by{" "}
+          <span className="footer-gradient">Gregg Cochran</span>
+        </p>
+        <p className="footer-tagline">
+          A non-technical builder who shipped this with the GitHub Copilot
+          CLI and ~130 AI agents.
+        </p>
+        <p className="footer-mantra">
+          If you can describe what you want, you can build it.{" "}
+          {"\u{1F989}"}
+        </p>
+        <div className="footer-links">
+          <a
+            href="https://github.com/DUBSOpenHub/hoot"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
+          <a
+            href="https://docs.github.com/en/copilot/github-copilot-in-the-cli"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Copilot CLI
+          </a>
+          <a
+            href="https://github.com/DUBSOpenHub"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            DUBSOpenHub
+          </a>
+        </div>
+        <p className="footer-copy">
+          {"\u00A9"} 2026 Hoot. All rights reserved.
+        </p>
       </footer>
     </div>
   );
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Helpers
-   ───────────────────────────────────────────────────────────── */
-
-function catColor(cat: string): string {
-  switch (cat) {
-    case "Orchestration": return "bg-blue-500/15 text-blue-400";
-    case "Build": return "bg-amber-500/15 text-amber-400";
-    case "Productivity": return "bg-emerald-500/15 text-emerald-400";
-    case "Intelligence": return "bg-purple-500/15 text-purple-400";
-    case "Training": return "bg-cyan-500/15 text-cyan-400";
-    default: return "bg-zinc-500/15 text-zinc-400";
-  }
 }
