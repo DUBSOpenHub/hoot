@@ -15,4 +15,4 @@ done
 sqlite3 ~/.max/max.db "DELETE FROM max_state WHERE key='orchestrator_session_id';" 2>/dev/null
 
 # Start Hoot
-cd ~/max && exec npx tsx src/daemon.ts
+cd ~/hoot && exec npx tsx src/daemon.ts

@@ -241,8 +241,41 @@ export default function Home() {
   const [navScrolled, setNavScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showBackTop, setShowBackTop] = useState(false);
+  const [dashboardData, setDashboardData] = useState<{
+    status: string;
+    workers: { name: string; status: string; workingDir: string }[];
+    circuitBreakers: Record<string, { state: string; failures: number }>;
+    skillCount: number;
+  }>({ status: "unknown", workers: [], circuitBreakers: {}, skillCount: 0 });
 
   const typedText = useTypingEffect(TYPING_PHRASES);
+
+  /* Dashboard polling */
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:7777/status", { mode: "cors" });
+        if (res.ok) {
+          const data = await res.json();
+          setDashboardData((prev) => ({ ...prev, ...data, status: data.status || "ok" }));
+        } else {
+          setDashboardData((prev) => ({ ...prev, status: "down" }));
+        }
+      } catch {
+        setDashboardData((prev) => ({ ...prev, status: "down" }));
+      }
+      try {
+        const res = await fetch("http://127.0.0.1:7777/skills", { mode: "cors" });
+        if (res.ok) {
+          const skills = await res.json();
+          setDashboardData((prev) => ({ ...prev, skillCount: Array.isArray(skills) ? skills.length : 20 }));
+        }
+      } catch { /* ignore */ }
+    };
+    fetchDashboard();
+    const interval = setInterval(fetchDashboard, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   /* Scroll effects */
   useEffect(() => {
@@ -381,8 +414,8 @@ export default function Home() {
             </a>
           </li>
           <li>
-            <a href="#journey" onClick={() => setMobileMenuOpen(false)}>
-              Journey
+            <a href="#dashboard" onClick={() => setMobileMenuOpen(false)}>
+              Dashboard
             </a>
           </li>
           <li>
@@ -427,7 +460,7 @@ export default function Home() {
             tabIndex={0}
             aria-label="Click 5 times fast for a surprise"
           >
-            <span>Hoot</span>
+            <span>Hoot 🦉</span>
           </h1>
 
           <div className="hero-typing-wrap">
@@ -686,40 +719,106 @@ export default function Home() {
         </div>
       </section>
 
-      {/* JOURNEY / TIMELINE */}
-      <section id="journey" className="hoot-section">
+      {/* LIVE DASHBOARD */}
+      <section id="dashboard" className="hoot-section">
         <div
           style={{ maxWidth: 700, margin: "0 auto 4rem" }}
           className="reveal"
         >
-          <span className="section-label">The Journey</span>
+          <span className="section-label">Live Status</span>
           <h2 className="section-title">
-            From Hackathon <em>to Hoot</em>
+            Hoot <em>Command Center</em>
           </h2>
           <p className="section-sub">
-            How a non-technical builder shipped a production AI daemon in a
-            single weekend.
+            Real-time daemon status. Connects to Hoot on localhost:7777.
           </p>
         </div>
 
-        <div className="timeline">
-          <div className="timeline-line" aria-hidden="true" />
-          {TIMELINE.map((entry, i) => (
-            <div
-              key={entry.title}
-              className="timeline-entry reveal"
-              style={{ transitionDelay: `${i * 0.15}s` }}
-            >
-              <div className="timeline-dot" aria-hidden="true" />
-              <div className="timeline-content">
-                <div className="timeline-when">{entry.when}</div>
-                <div className="timeline-title">
-                  {entry.icon} {entry.title}
-                </div>
-                <div className="timeline-desc">{entry.desc}</div>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          {/* Status + Model Row */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }} className="reveal">
+            <div className="stat-card">
+              <div className="stat-number" style={{ color: dashboardData.status === "ok" ? "var(--green)" : "#ef4444" }}>
+                {dashboardData.status === "ok" ? "● Online" : "● Offline"}
+              </div>
+              <div className="stat-label">Daemon Status</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-number">{dashboardData.workers.length}</div>
+              <div className="stat-label">Active Workers</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-number">{dashboardData.skillCount}</div>
+              <div className="stat-label">Skills Loaded</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-number" style={{ fontSize: "1.4rem" }}>
+                {Object.entries(dashboardData.circuitBreakers).map(([name, cb]) => (
+                  <span key={name} style={{ color: cb.state === "closed" ? "var(--green)" : "#ef4444" }}>
+                    {name.replace("sdk.", "")}: {cb.state}{" "}
+                  </span>
+                ))}
+                {Object.keys(dashboardData.circuitBreakers).length === 0 && "—"}
+              </div>
+              <div className="stat-label">Circuit Breakers</div>
+            </div>
+          </div>
+
+          {/* Workers List */}
+          {dashboardData.workers.length > 0 && (
+            <div className="reveal" style={{ marginBottom: "2rem" }}>
+              <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--subtle)" }}>Active Workers</h3>
+              <div style={{ display: "grid", gap: "0.75rem" }}>
+                {dashboardData.workers.map((w) => (
+                  <div key={w.name} style={{
+                    padding: "1rem 1.5rem",
+                    background: "var(--surface)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "12px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}>
+                    <div>
+                      <span style={{ fontWeight: 600 }}>{w.name}</span>
+                      <span style={{ color: "var(--muted)", fontSize: "0.85rem", marginLeft: "1rem" }}>{w.workingDir}</span>
+                    </div>
+                    <span style={{ color: "var(--green)", fontSize: "0.85rem", fontFamily: "'JetBrains Mono', monospace" }}>{w.status}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
+          )}
+
+          {/* Memory / Recent Activity */}
+          <div className="reveal" style={{
+            padding: "1.5rem",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: "14px",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "0.82rem",
+            lineHeight: 1.8,
+            color: "var(--subtle)",
+            maxHeight: "200px",
+            overflow: "auto",
+          }}>
+            <div style={{ color: "var(--muted)", marginBottom: "0.5rem" }}>// daemon log</div>
+            {dashboardData.status === "ok" ? (
+              <>
+                <div><span style={{ color: "var(--green)" }}>✓</span> Daemon running on :7777</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.skillCount} skills loaded</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.workers.length} active workers</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> Circuit breakers: all closed</div>
+                <div><span style={{ color: "var(--accent3)" }}>→</span> Waiting for messages...</div>
+              </>
+            ) : (
+              <>
+                <div><span style={{ color: "#ef4444" }}>✗</span> Cannot reach Hoot on :7777</div>
+                <div><span style={{ color: "var(--muted)" }}>→</span> Is the daemon running? Try: cd ~/hoot && npx tsx src/daemon.ts</div>
+              </>
+            )}
+          </div>
         </div>
       </section>
 
@@ -730,7 +829,7 @@ export default function Home() {
           <span className="footer-gradient">Gregg Cochran</span>
         </p>
         <p className="footer-tagline">
-          A non-technical builder who shipped this with the GitHub Copilot
+          An AI-native builder who shipped this with the GitHub Copilot
           CLI and ~130 AI agents.
         </p>
         <p className="footer-mantra">

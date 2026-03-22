@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ─── Design tokens ──────────────────────────── */
+@layer base {
 :root {
   --bg:       #0a0a0f;
   --surface:  #111118;
@@ -723,4 +723,5 @@ body::before {
 @media (max-width: 480px) {
   .hero-actions { flex-direction: column; align-items: center; }
   .btn-primary, .btn-outline { width: 100%; justify-content: center; }
+}
 }
