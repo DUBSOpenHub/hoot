@@ -315,6 +315,10 @@ export default function Home() {
           {SUBTITLES[subtitleIdx]}
         </button>
 
+        <p className="mt-4 max-w-xl mx-auto text-sm sm:text-base text-zinc-500 leading-relaxed">
+          Personal AI daemon with pluggable backends. Ships with Copilot SDK — swap in Ollama, Anthropic, or OpenAI via AIProvider. Runs 24/7, remembers everything, reaches you on Telegram.
+        </p>
+
         <div className="mt-8 flex items-center justify-center gap-4 flex-wrap">
           <span
             className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium ${
