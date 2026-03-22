@@ -4,9 +4,9 @@
 [![CI](https://github.com/DUBSOpenHub/hoot/actions/workflows/ci.yml/badge.svg)](https://github.com/DUBSOpenHub/hoot/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Node.js ≥18](https://img.shields.io/badge/node-%E2%89%A518-232F3E.svg)
-![Built on Copilot SDK](https://img.shields.io/badge/built%20on-Copilot%20SDK-000000.svg)
+![Default backend: Copilot SDK](https://img.shields.io/badge/default%20backend-Copilot%20SDK-000000.svg)
 
-**Your personal AI daemon — it runs 24/7 in the background, remembers your preferences, handles tasks while you sleep, and reaches you on Telegram or your terminal.** Built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk).
+**Your personal AI daemon — it runs 24/7 in the background, remembers your preferences, handles tasks while you sleep, and reaches you on Telegram or your terminal.** Ships with [GitHub Copilot SDK](https://github.com/github/copilot-sdk) as the default backend; swap in Ollama, Anthropic, or OpenAI via the `AIProvider` interface.
 
 > ### ⚡ Three Commands. Done.
 >
@@ -93,7 +93,7 @@ This creates `~/.max/` — the Hoot config directory. It stores your config, dat
 copilot login
 ```
 
-> **What's the Copilot CLI?** It's the AI engine Hoot uses under the hood. Hoot is built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) — you need an active [Copilot subscription](https://github.com/features/copilot/plans).
+> **What's the Copilot CLI?** It's the default AI backend Hoot ships with. Hoot's `AIProvider` interface supports pluggable backends — Copilot SDK is the default, but you can swap in Ollama, Anthropic, or OpenAI. For the default setup, you need an active [Copilot subscription](https://github.com/features/copilot/plans).
 
 ### Step 4: Start the daemon
 
@@ -211,7 +211,7 @@ Here's what happens when you send Hoot a message: your input arrives through one
 
 - **Message Bus** — Typed EventEmitter decoupling all components via pub/sub
 - **Priority Queue** — 3-lane concurrent processing (fast/standard/premium) with rate limiting
-- **Worker Pool** — Pre-warmed Copilot SDK sessions for instant background task dispatch
+- **Worker Pool** — Pre-warmed AI sessions for instant background task dispatch
 - **Circuit Breaker** — Auto-trips after 3 SDK failures, self-heals after 30s
 - **Plugin System** — Drop plugins in `~/.max/plugins/` with hot-reload
 - **Audit Log** — Every auth rejection, model switch, and worker event logged to SQLite
@@ -365,7 +365,7 @@ npx tsc --noEmit
 Yes. You need a [Copilot subscription](https://github.com/features/copilot/plans) for the underlying AI, but Hoot itself is MIT-licensed open source.
 
 **Does Hoot need the internet?**
-Yes — the Copilot SDK requires cloud connectivity. But all storage, config, skills, and memories are local.
+Yes — the default Copilot SDK backend requires cloud connectivity. But all storage, config, skills, and memories are local. Alternative backends (like Ollama) can run fully offline.
 
 **Can I use it without Telegram?**
 Absolutely. Telegram is optional. The TUI and HTTP API work without it.
@@ -383,7 +383,7 @@ Yes — drop a markdown file in `~/.max/skills/` or a TypeScript plugin in `~/.m
 Backward compatibility. Renaming it would break existing installations, so we keep `~/.max/` as the config directory. Everything inside is Hoot's.
 
 **What is the Copilot SDK?**
-The [GitHub Copilot SDK](https://github.com/github/copilot-sdk) is a Node.js library that provides AI model access, session management, tool calling, and streaming. Hoot uses it as the foundation for all AI interactions — the Orchestrator, Workers, and Classifier are all Copilot SDK sessions.
+The [GitHub Copilot SDK](https://github.com/github/copilot-sdk) is a Node.js library that provides AI model access, session management, tool calling, and streaming. It's Hoot's default `AIProvider` backend. The `AIProvider` interface (`src/providers/types.ts`) lets you swap in any backend — implement `createSession()`, `sendAndWait()`, and `listModels()` and Hoot works with your provider instead.
 
 ---
 

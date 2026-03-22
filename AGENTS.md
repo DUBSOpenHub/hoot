@@ -2,7 +2,7 @@
 
 ## Overview
 
-Hoot is a personal AI daemon built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk). It runs as a background process (`~/.max/` — Hoot config directory, kept for backward compatibility) and exposes three channel interfaces — a Telegram bot, a terminal TUI, and a local HTTP API — all routed through a single **Orchestrator** brain. Agent logic is implemented as SDK sessions; background tasks are delegated to isolated **Worker** sessions; complexity routing is handled by a lightweight **Classifier** agent that keeps heavy models reserved for hard problems.
+Hoot is a personal AI daemon with a pluggable AI backend (ships with [GitHub Copilot SDK](https://github.com/github/copilot-sdk) as the default; swap in Ollama, Anthropic, or OpenAI via the `AIProvider` interface). It runs as a background process (`~/.max/` — Hoot config directory, kept for backward compatibility) and exposes three channel interfaces — a Telegram bot, a terminal TUI, and a local HTTP API — all routed through a single **Orchestrator** brain. Agent logic is implemented as AI sessions via the `AIProvider`; background tasks are delegated to isolated **Worker** sessions; complexity routing is handled by a lightweight **Classifier** agent that keeps heavy models reserved for hard problems.
 
 ```
  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
@@ -36,7 +36,7 @@ Hoot is a personal AI daemon built on the [GitHub Copilot SDK](https://github.co
 
 ### Orchestrator — main brain (`src/copilot/orchestrator.ts`)
 
-The Orchestrator holds the **primary Copilot SDK session**. Every inbound message arrives here after passing through a channel adapter. The Orchestrator:
+The Orchestrator holds the **primary AI session** (via the `AIProvider` interface). Every inbound message arrives here after passing through a channel adapter. The Orchestrator:
 
 - Maintains conversation context across all channels.
 - Calls the Classifier to select a model tier before dispatching.
@@ -46,7 +46,7 @@ The Orchestrator holds the **primary Copilot SDK session**. Every inbound messag
 
 ### Workers — background task agents (`src/copilot/tools.ts`, `src/workers/pool.ts`)
 
-Workers are **independent Copilot SDK sessions** created on demand for coding tasks, file operations, and long-running work. Key properties:
+Workers are **independent AI sessions** created on demand for coding tasks, file operations, and long-running work. Key properties:
 
 - Isolated working directory (enforced at creation time).
 - Non-blocking dispatch: the Orchestrator returns immediately while the worker runs.
@@ -185,7 +185,7 @@ hoot restart
 
 ## Worker Pool Lifecycle (`src/workers/pool.ts`)
 
-When `MAX_POOL_ENABLED=1`, Copilot SDK sessions are reused across tasks to eliminate the per-task session-creation overhead.
+When `MAX_POOL_ENABLED=1`, AI sessions are reused across tasks to eliminate the per-task session-creation overhead.
 
 ```
            start()
@@ -219,7 +219,7 @@ If the pool is at capacity and all sessions are checked out, `checkout()` enqueu
 
 ## Circuit Breaker (`src/resilience/circuit-breaker.ts`)
 
-All Copilot SDK calls are wrapped in a `CircuitBreaker` to prevent cascading failures.
+All AI backend calls are wrapped in a `CircuitBreaker` to prevent cascading failures.
 
 **States:**
 
@@ -239,7 +239,7 @@ Breaker state for all named breakers is exposed at `GET /status` under `circuitB
 
 ```typescript
 // Usage pattern
-const breaker = createBreaker({ name: "copilot-sdk" });
+const breaker = createBreaker({ name: "ai-provider" });
 const result = await breaker.execute(() => session.sendAndWait(prompt));
 ```
 
