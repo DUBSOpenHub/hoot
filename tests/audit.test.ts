@@ -6,7 +6,7 @@ import { mkdirSync, rmSync } from "fs";
 
 // Test helpers that mirror the audit log functions but use a temp DB
 function setupTestDb() {
-  const dir = join(tmpdir(), `max-audit-test-${Date.now()}`);
+  const dir = join(tmpdir(), `hoot-audit-test-${Date.now()}`);
   mkdirSync(dir, { recursive: true });
   const dbPath = join(dir, "test.db");
   const db = new Database(dbPath);

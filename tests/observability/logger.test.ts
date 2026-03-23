@@ -25,7 +25,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  delete process.env.MAX_LOG_FORMAT;
+  delete process.env.HOOT_LOG_FORMAT;
 });
 
 // ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ describe('FR-6.1 — Structured logger replaces console.log', () => {
 // ---------------------------------------------------------------------------
 describe('FR-6.2 — JSON log line schema', () => {
   it('FR-6.2: logger output is valid JSON', async () => {
-    process.env.MAX_LOG_FORMAT = 'json';
+    process.env.HOOT_LOG_FORMAT = 'json';
     const mod = await import('../../src/observability/logger');
     const logger = mod.logger ?? mod.createLogger?.({ component: 'test-component' }) ?? mod.default;
 
@@ -90,7 +90,7 @@ describe('FR-6.2 — JSON log line schema', () => {
   });
 
   it('FR-6.2: JSON log line includes ts field', async () => {
-    process.env.MAX_LOG_FORMAT = 'json';
+    process.env.HOOT_LOG_FORMAT = 'json';
     const mod = await import('../../src/observability/logger');
     const logger = mod.logger ?? mod.createLogger?.({ component: 'comp' }) ?? mod.default;
 
@@ -108,7 +108,7 @@ describe('FR-6.2 — JSON log line schema', () => {
   });
 
   it('FR-6.2: JSON log line includes level field', async () => {
-    process.env.MAX_LOG_FORMAT = 'json';
+    process.env.HOOT_LOG_FORMAT = 'json';
     const mod = await import('../../src/observability/logger');
     const logger = mod.logger ?? mod.createLogger?.({ component: 'comp' }) ?? mod.default;
 
@@ -127,7 +127,7 @@ describe('FR-6.2 — JSON log line schema', () => {
   });
 
   it('FR-6.2: JSON log line includes component field', async () => {
-    process.env.MAX_LOG_FORMAT = 'json';
+    process.env.HOOT_LOG_FORMAT = 'json';
     const mod = await import('../../src/observability/logger');
     const logger = mod.createLogger?.({ component: 'my-component' }) ??
                    mod.logger?.child?.({ component: 'my-component' }) ??
@@ -148,7 +148,7 @@ describe('FR-6.2 — JSON log line schema', () => {
   });
 
   it('FR-6.2: JSON log line includes msg field', async () => {
-    process.env.MAX_LOG_FORMAT = 'json';
+    process.env.HOOT_LOG_FORMAT = 'json';
     const mod = await import('../../src/observability/logger');
     const logger = mod.logger ?? mod.createLogger?.({ component: 'comp' }) ?? mod.default;
 
@@ -167,7 +167,7 @@ describe('FR-6.2 — JSON log line schema', () => {
   });
 
   it('FR-6.2: error log level value is error or ERROR', async () => {
-    process.env.MAX_LOG_FORMAT = 'json';
+    process.env.HOOT_LOG_FORMAT = 'json';
     const mod = await import('../../src/observability/logger');
     const logger = mod.logger ?? mod.createLogger?.({ component: 'comp' }) ?? mod.default;
 
@@ -186,11 +186,11 @@ describe('FR-6.2 — JSON log line schema', () => {
 });
 
 // ---------------------------------------------------------------------------
-// FR-6.3 — MAX_LOG_FORMAT=pretty outputs human-readable logs; legacy passes through
+// FR-6.3 — HOOT_LOG_FORMAT=pretty outputs human-readable logs; legacy passes through
 // ---------------------------------------------------------------------------
-describe('FR-6.3 — MAX_LOG_FORMAT flag behavior', () => {
-  it('FR-6.3: MAX_LOG_FORMAT=pretty produces non-JSON (human-readable) output', async () => {
-    process.env.MAX_LOG_FORMAT = 'pretty';
+describe('FR-6.3 — HOOT_LOG_FORMAT flag behavior', () => {
+  it('FR-6.3: HOOT_LOG_FORMAT=pretty produces non-JSON (human-readable) output', async () => {
+    process.env.HOOT_LOG_FORMAT = 'pretty';
     const mod = await import('../../src/observability/logger');
     const logger = mod.logger ?? mod.createLogger?.({ component: 'comp' }) ?? mod.default;
 
@@ -210,8 +210,8 @@ describe('FR-6.3 — MAX_LOG_FORMAT flag behavior', () => {
     expect(isParseable).toBe(false);
   });
 
-  it('FR-6.3: MAX_LOG_FORMAT=legacy passes output to console.log unchanged', async () => {
-    process.env.MAX_LOG_FORMAT = 'legacy';
+  it('FR-6.3: HOOT_LOG_FORMAT=legacy passes output to console.log unchanged', async () => {
+    process.env.HOOT_LOG_FORMAT = 'legacy';
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const mod = await import('../../src/observability/logger');
@@ -222,8 +222,8 @@ describe('FR-6.3 — MAX_LOG_FORMAT flag behavior', () => {
     consoleSpy.mockRestore();
   });
 
-  it('FR-6.3: MAX_LOG_FORMAT defaults to json when not set', async () => {
-    delete process.env.MAX_LOG_FORMAT;
+  it('FR-6.3: HOOT_LOG_FORMAT defaults to json when not set', async () => {
+    delete process.env.HOOT_LOG_FORMAT;
     const mod = await import('../../src/observability/logger');
     const logger = mod.logger ?? mod.createLogger?.({ component: 'comp' }) ?? mod.default;
 

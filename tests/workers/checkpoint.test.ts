@@ -10,15 +10,15 @@ import { join } from 'path';
 let testDbDir: string;
 
 beforeEach(() => {
-  testDbDir = join(tmpdir(), `max-checkpoint-test-${Date.now()}`);
+  testDbDir = join(tmpdir(), `hoot-checkpoint-test-${Date.now()}`);
   mkdirSync(testDbDir, { recursive: true });
-  process.env.MAX_DB_PATH = join(testDbDir, 'test.db');
+  process.env.HOOT_DB_PATH = join(testDbDir, 'test.db');
   vi.resetModules();
 });
 
 afterEach(() => {
   rmSync(testDbDir, { recursive: true, force: true });
-  delete process.env.MAX_DB_PATH;
+  delete process.env.HOOT_DB_PATH;
   vi.restoreAllMocks();
 });
 

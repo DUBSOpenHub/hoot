@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { PluginManager } from "../src/plugins/manager.js";
-import type { MaxPlugin, PluginContext } from "../src/plugins/types.js";
+import type { HootPlugin, PluginContext } from "../src/plugins/types.js";
 import { mkdirSync, writeFileSync, rmSync, existsSync } from "fs";
 import { join, resolve } from "path";
 import { tmpdir } from "os";
 import { MessageBus } from "../src/bus/index.js";
 
 function createTmpPluginDir(plugins: Record<string, string>) {
-  const dir = join(tmpdir(), `max-plugin-test-${Date.now()}`);
+  const dir = join(tmpdir(), `hoot-plugin-test-${Date.now()}`);
   mkdirSync(dir, { recursive: true });
   for (const [name, code] of Object.entries(plugins)) {
     const pluginDir = join(dir, name);
@@ -101,8 +101,8 @@ describe("PluginManager", () => {
     expect(mockCtx.config.apiPort).toBe(7777);
   });
 
-  it("MaxPlugin interface satisfies required shape", async () => {
-    const plugin: MaxPlugin = {
+  it("HootPlugin interface satisfies required shape", async () => {
+    const plugin: HootPlugin = {
       name: "test-plugin",
       version: "1.0.0",
       async onLoad(ctx: PluginContext) {

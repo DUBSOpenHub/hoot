@@ -9,11 +9,11 @@ import { resolve } from 'path';
 
 beforeEach(() => {
   vi.resetModules();
-  process.env.MAX_API_TOKEN = 'hardening-test-token';
+  process.env.HOOT_API_TOKEN = 'hardening-test-token';
 });
 
 afterEach(() => {
-  delete process.env.MAX_API_TOKEN;
+  delete process.env.HOOT_API_TOKEN;
   vi.restoreAllMocks();
 });
 

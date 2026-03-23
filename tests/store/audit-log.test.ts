@@ -13,14 +13,14 @@ import { join } from 'path';
 let testDbDir: string;
 
 beforeEach(() => {
-  testDbDir = join(tmpdir(), `max-audit-test-${Date.now()}`);
+  testDbDir = join(tmpdir(), `hoot-audit-test-${Date.now()}`);
   mkdirSync(testDbDir, { recursive: true });
-  process.env.MAX_DB_PATH = join(testDbDir, 'test.db');
+  process.env.HOOT_DB_PATH = join(testDbDir, 'test.db');
 });
 
 afterEach(() => {
   rmSync(testDbDir, { recursive: true, force: true });
-  delete process.env.MAX_DB_PATH;
+  delete process.env.HOOT_DB_PATH;
   vi.resetModules();
 });
 
@@ -143,7 +143,7 @@ describe('FR-9.2 — GET /audit endpoint', () => {
   });
 
   it('FR-9.2: GET /audit returns 200 with valid bearer token', async () => {
-    process.env.MAX_API_TOKEN = 'test-secret-token';
+    process.env.HOOT_API_TOKEN = 'test-secret-token';
     let request: typeof import('supertest');
     let app: unknown;
     try {
@@ -159,7 +159,7 @@ describe('FR-9.2 — GET /audit endpoint', () => {
   });
 
   it('FR-9.2: GET /audit returns at most 100 entries', async () => {
-    process.env.MAX_API_TOKEN = 'test-secret-token';
+    process.env.HOOT_API_TOKEN = 'test-secret-token';
     let request: typeof import('supertest');
     let app: unknown;
     try {
@@ -181,7 +181,7 @@ describe('FR-9.2 — GET /audit endpoint', () => {
   });
 
   it('FR-9.2: GET /audit returns entries as JSON array with action and ts fields', async () => {
-    process.env.MAX_API_TOKEN = 'test-secret-token';
+    process.env.HOOT_API_TOKEN = 'test-secret-token';
     let request: typeof import('supertest');
     let app: unknown;
     try {

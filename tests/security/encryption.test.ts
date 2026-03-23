@@ -13,30 +13,30 @@ let dbPath: string;
 let tokenPath: string;
 
 beforeEach(() => {
-  testDir = join(tmpdir(), `max-enc-test-${Date.now()}`);
+  testDir = join(tmpdir(), `hoot-enc-test-${Date.now()}`);
   mkdirSync(testDir, { recursive: true });
-  dbPath = join(testDir, 'max.db');
+  dbPath = join(testDir, 'hoot.db');
   tokenPath = join(testDir, 'api-token');
   writeFileSync(tokenPath, 'test-api-secret-key-for-hkdf', 'utf8');
-  process.env.MAX_DB_PATH = dbPath;
-  process.env.MAX_TOKEN_PATH = tokenPath;
+  process.env.HOOT_DB_PATH = dbPath;
+  process.env.HOOT_TOKEN_PATH = tokenPath;
   vi.resetModules();
 });
 
 afterEach(() => {
   rmSync(testDir, { recursive: true, force: true });
-  delete process.env.MAX_DB_PATH;
-  delete process.env.MAX_TOKEN_PATH;
-  delete process.env.MAX_ENCRYPT_DB;
+  delete process.env.HOOT_DB_PATH;
+  delete process.env.HOOT_TOKEN_PATH;
+  delete process.env.HOOT_ENCRYPT_DB;
   vi.restoreAllMocks();
 });
 
 // ---------------------------------------------------------------------------
-// FR-5.1 — When MAX_ENCRYPT_DB=1, SQLCipher is used with HKDF key
+// FR-5.1 — When HOOT_ENCRYPT_DB=1, SQLCipher is used with HKDF key
 // ---------------------------------------------------------------------------
 describe('FR-5.1 — Encrypted database opens with SQLCipher', () => {
-  it('FR-5.1: getDb() with MAX_ENCRYPT_DB=1 does not throw', async () => {
-    process.env.MAX_ENCRYPT_DB = '1';
+  it('FR-5.1: getDb() with HOOT_ENCRYPT_DB=1 does not throw', async () => {
+    process.env.HOOT_ENCRYPT_DB = '1';
     vi.resetModules();
     // If better-sqlite3-sqlcipher is not installed, skip gracefully
     try {
@@ -53,7 +53,7 @@ describe('FR-5.1 — Encrypted database opens with SQLCipher', () => {
   });
 
   it('FR-5.1: encryption key is derived from api-token file via HKDF-SHA256', async () => {
-    process.env.MAX_ENCRYPT_DB = '1';
+    process.env.HOOT_ENCRYPT_DB = '1';
     vi.resetModules();
 
     // Verify the db module references HKDF key derivation
@@ -108,7 +108,7 @@ describe('FR-5.2 — Encryption migration', () => {
   });
 
   it('FR-5.2: migration creates an encrypted database file', async () => {
-    process.env.MAX_ENCRYPT_DB = '1';
+    process.env.HOOT_ENCRYPT_DB = '1';
     vi.resetModules();
 
     let mod: Record<string, unknown>;
@@ -133,7 +133,7 @@ describe('FR-5.2 — Encryption migration', () => {
   });
 
   it('FR-5.2: migration atomically renames (old plain db replaced by encrypted)', async () => {
-    process.env.MAX_ENCRYPT_DB = '1';
+    process.env.HOOT_ENCRYPT_DB = '1';
     vi.resetModules();
 
     let mod: Record<string, unknown>;
@@ -160,7 +160,7 @@ describe('FR-5.2 — Encryption migration', () => {
 // ---------------------------------------------------------------------------
 describe('FR-5.3 — Idempotent migration', () => {
   it('FR-5.3: running migration twice does not throw', async () => {
-    process.env.MAX_ENCRYPT_DB = '1';
+    process.env.HOOT_ENCRYPT_DB = '1';
     vi.resetModules();
 
     let mod: Record<string, unknown>;
@@ -178,7 +178,7 @@ describe('FR-5.3 — Idempotent migration', () => {
   });
 
   it('FR-5.3: data is intact after running migration twice', async () => {
-    process.env.MAX_ENCRYPT_DB = '1';
+    process.env.HOOT_ENCRYPT_DB = '1';
     vi.resetModules();
 
     let mod: Record<string, unknown>;
@@ -213,7 +213,7 @@ describe('FR-5.3 — Idempotent migration', () => {
 // ---------------------------------------------------------------------------
 describe('FR-5.4 — Encrypted DB unreadable without key', () => {
   it('FR-5.4: sqlite3 CLI cannot read tables from an encrypted database', async () => {
-    process.env.MAX_ENCRYPT_DB = '1';
+    process.env.HOOT_ENCRYPT_DB = '1';
     vi.resetModules();
 
     let mod: Record<string, unknown>;
@@ -248,11 +248,11 @@ describe('FR-5.4 — Encrypted DB unreadable without key', () => {
 });
 
 // ---------------------------------------------------------------------------
-// FR-5.5 — MAX_ENCRYPT_DB=0 keeps better-sqlite3 unchanged
+// FR-5.5 — HOOT_ENCRYPT_DB=0 keeps better-sqlite3 unchanged
 // ---------------------------------------------------------------------------
-describe('FR-5.5 — MAX_ENCRYPT_DB=0 uses plain better-sqlite3', () => {
-  it('FR-5.5: getDb() with MAX_ENCRYPT_DB=0 uses plain better-sqlite3', async () => {
-    process.env.MAX_ENCRYPT_DB = '0';
+describe('FR-5.5 — HOOT_ENCRYPT_DB=0 uses plain better-sqlite3', () => {
+  it('FR-5.5: getDb() with HOOT_ENCRYPT_DB=0 uses plain better-sqlite3', async () => {
+    process.env.HOOT_ENCRYPT_DB = '0';
     vi.resetModules();
     const { getDb } = await import('../../src/store/db');
     const db = getDb();
@@ -261,8 +261,8 @@ describe('FR-5.5 — MAX_ENCRYPT_DB=0 uses plain better-sqlite3', () => {
     expect(() => db.prepare('SELECT 1').get()).not.toThrow();
   });
 
-  it('FR-5.5: getDb() with MAX_ENCRYPT_DB unset uses plain better-sqlite3', async () => {
-    delete process.env.MAX_ENCRYPT_DB;
+  it('FR-5.5: getDb() with HOOT_ENCRYPT_DB unset uses plain better-sqlite3', async () => {
+    delete process.env.HOOT_ENCRYPT_DB;
     vi.resetModules();
     const { getDb } = await import('../../src/store/db');
     const db = getDb();

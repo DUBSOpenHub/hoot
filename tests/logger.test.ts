@@ -20,8 +20,8 @@ describe("Logger", () => {
     expect(corr).toBeInstanceOf(Logger);
   });
 
-  it("outputs JSON when MAX_LOG_FORMAT=json", () => {
-    process.env.MAX_LOG_FORMAT = "json";
+  it("outputs JSON when HOOT_LOG_FORMAT=json", () => {
+    process.env.HOOT_LOG_FORMAT = "json";
     const lines: string[] = [];
     const origWrite = process.stdout.write.bind(process.stdout);
     (process.stdout as any).write = (s: string) => { lines.push(s); return true; };
@@ -30,7 +30,7 @@ describe("Logger", () => {
     logger.info("test message", { key: "value" });
 
     (process.stdout as any).write = origWrite;
-    process.env.MAX_LOG_FORMAT = "json";
+    process.env.HOOT_LOG_FORMAT = "json";
 
     expect(lines.length).toBeGreaterThan(0);
     const parsed = JSON.parse(lines[0]);
@@ -41,8 +41,8 @@ describe("Logger", () => {
     expect(parsed.ts).toBeDefined();
   });
 
-  it("outputs pretty format when MAX_LOG_FORMAT=pretty", () => {
-    process.env.MAX_LOG_FORMAT = "pretty";
+  it("outputs pretty format when HOOT_LOG_FORMAT=pretty", () => {
+    process.env.HOOT_LOG_FORMAT = "pretty";
     const lines: string[] = [];
     const origWrite = process.stdout.write.bind(process.stdout);
     (process.stdout as any).write = (s: string) => { lines.push(s); return true; };
@@ -51,7 +51,7 @@ describe("Logger", () => {
     logger.info("pretty message");
 
     (process.stdout as any).write = origWrite;
-    process.env.MAX_LOG_FORMAT = "json";
+    process.env.HOOT_LOG_FORMAT = "json";
 
     expect(lines.length).toBeGreaterThan(0);
     expect(lines[0]).toContain("pretty-test");
@@ -59,8 +59,8 @@ describe("Logger", () => {
     expect(lines[0]).not.toContain("{"); // Not raw JSON
   });
 
-  it("outputs to console.log when MAX_LOG_FORMAT=legacy", () => {
-    process.env.MAX_LOG_FORMAT = "legacy";
+  it("outputs to console.log when HOOT_LOG_FORMAT=legacy", () => {
+    process.env.HOOT_LOG_FORMAT = "legacy";
     let capturedMsg: string | undefined;
     const origLog = console.log;
     console.log = (...args: unknown[]) => { capturedMsg = args.join(" "); };
@@ -69,13 +69,13 @@ describe("Logger", () => {
     logger.info("legacy message");
 
     console.log = origLog;
-    process.env.MAX_LOG_FORMAT = "json";
+    process.env.HOOT_LOG_FORMAT = "json";
 
     expect(capturedMsg).toContain("legacy message");
   });
 
   it("error() writes to stderr", () => {
-    process.env.MAX_LOG_FORMAT = "json";
+    process.env.HOOT_LOG_FORMAT = "json";
     const lines: string[] = [];
     const origWrite = process.stderr.write.bind(process.stderr);
     (process.stderr as any).write = (s: string) => { lines.push(s); return true; };
@@ -92,7 +92,7 @@ describe("Logger", () => {
   });
 
   it("log entry includes correlationId when set", () => {
-    process.env.MAX_LOG_FORMAT = "json";
+    process.env.HOOT_LOG_FORMAT = "json";
     const lines: string[] = [];
     const origWrite = process.stdout.write.bind(process.stdout);
     (process.stdout as any).write = (s: string) => { lines.push(s); return true; };

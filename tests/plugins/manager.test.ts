@@ -11,22 +11,22 @@ let pluginsDir: string;
 let testDbDir: string;
 
 beforeEach(() => {
-  pluginsDir = join(tmpdir(), `max-plugins-test-${Date.now()}`);
-  testDbDir = join(tmpdir(), `max-db-test-${Date.now()}`);
+  pluginsDir = join(tmpdir(), `hoot-plugins-test-${Date.now()}`);
+  testDbDir = join(tmpdir(), `hoot-db-test-${Date.now()}`);
   mkdirSync(pluginsDir, { recursive: true });
   mkdirSync(testDbDir, { recursive: true });
-  process.env.MAX_PLUGINS_DIR = pluginsDir;
-  process.env.MAX_DB_PATH = join(testDbDir, 'test.db');
-  process.env.MAX_PLUGINS_ENABLED = '1';
+  process.env.HOOT_PLUGINS_DIR = pluginsDir;
+  process.env.HOOT_DB_PATH = join(testDbDir, 'test.db');
+  process.env.HOOT_PLUGINS_ENABLED = '1';
   vi.resetModules();
 });
 
 afterEach(() => {
   rmSync(pluginsDir, { recursive: true, force: true });
   rmSync(testDbDir, { recursive: true, force: true });
-  delete process.env.MAX_PLUGINS_DIR;
-  delete process.env.MAX_DB_PATH;
-  delete process.env.MAX_PLUGINS_ENABLED;
+  delete process.env.HOOT_PLUGINS_DIR;
+  delete process.env.HOOT_DB_PATH;
+  delete process.env.HOOT_PLUGINS_ENABLED;
   vi.restoreAllMocks();
 });
 

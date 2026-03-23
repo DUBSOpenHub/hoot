@@ -17,7 +17,7 @@ interface QueueMessage {
 
 beforeEach(() => vi.resetModules());
 afterEach(() => {
-  delete process.env.MAX_QUEUE_V2;
+  delete process.env.HOOT_QUEUE_V2;
   vi.useRealTimers();
 });
 
@@ -120,7 +120,7 @@ describe('FR-1.2 — Three lanes: fast, standard, premium', () => {
 // ---------------------------------------------------------------------------
 describe('FR-1.3 — Fast lane not blocked by premium lane', () => {
   it('FR-1.3: a fast message starts processing while a premium message is in-flight', async () => {
-    process.env.MAX_QUEUE_V2 = '1';
+    process.env.HOOT_QUEUE_V2 = '1';
     const mod = await import('../../src/queue/priority-queue');
     const PQ = mod.PriorityQueue ?? mod.default;
 
@@ -173,7 +173,7 @@ describe('FR-1.3 — Fast lane not blocked by premium lane', () => {
 // ---------------------------------------------------------------------------
 describe('FR-1.4 — Per-user serial ordering within lane', () => {
   it('FR-1.4: two messages from same userId in same lane are processed in order', async () => {
-    process.env.MAX_QUEUE_V2 = '1';
+    process.env.HOOT_QUEUE_V2 = '1';
     const mod = await import('../../src/queue/priority-queue');
     const PQ = mod.PriorityQueue ?? mod.default;
 
@@ -205,7 +205,7 @@ describe('FR-1.4 — Per-user serial ordering within lane', () => {
   });
 
   it('FR-1.4: messages from different userIds may process concurrently within lane', async () => {
-    process.env.MAX_QUEUE_V2 = '1';
+    process.env.HOOT_QUEUE_V2 = '1';
     const mod = await import('../../src/queue/priority-queue');
     const PQ = mod.PriorityQueue ?? mod.default;
 
@@ -253,7 +253,7 @@ describe('FR-1.5 — Global token-bucket rate limiter', () => {
   });
 
   it('FR-1.5: 11th SDK call within a minute queues instead of being dropped', async () => {
-    process.env.MAX_QUEUE_V2 = '1';
+    process.env.HOOT_QUEUE_V2 = '1';
     const mod = await import('../../src/queue/priority-queue');
     const PQ = mod.PriorityQueue ?? mod.default;
     const q = new PQ({ rateLimitPerMinute: 10 });
@@ -281,32 +281,32 @@ describe('FR-1.5 — Global token-bucket rate limiter', () => {
 });
 
 // ---------------------------------------------------------------------------
-// FR-1.6 — MAX_QUEUE_V2=0 restores the serial queue
+// FR-1.6 — HOOT_QUEUE_V2=0 restores the serial queue
 // ---------------------------------------------------------------------------
-describe('FR-1.6 — MAX_QUEUE_V2=0 serial queue fallback', () => {
+describe('FR-1.6 — HOOT_QUEUE_V2=0 serial queue fallback', () => {
   afterEach(() => {
-    delete process.env.MAX_QUEUE_V2;
+    delete process.env.HOOT_QUEUE_V2;
     vi.resetModules();
   });
 
-  it('FR-1.6: when MAX_QUEUE_V2=0, queue module reports legacy mode', async () => {
-    process.env.MAX_QUEUE_V2 = '0';
+  it('FR-1.6: when HOOT_QUEUE_V2=0, queue module reports legacy mode', async () => {
+    process.env.HOOT_QUEUE_V2 = '0';
     vi.resetModules();
     const mod = await import('../../src/queue/priority-queue');
-    const isV2 = mod.isQueueV2?.() ?? (process.env.MAX_QUEUE_V2 === '1');
+    const isV2 = mod.isQueueV2?.() ?? (process.env.HOOT_QUEUE_V2 === '1');
     expect(isV2).toBe(false);
   });
 
-  it('FR-1.6: when MAX_QUEUE_V2=1, queue module reports v2 mode', async () => {
-    process.env.MAX_QUEUE_V2 = '1';
+  it('FR-1.6: when HOOT_QUEUE_V2=1, queue module reports v2 mode', async () => {
+    process.env.HOOT_QUEUE_V2 = '1';
     vi.resetModules();
     const mod = await import('../../src/queue/priority-queue');
-    const isV2 = mod.isQueueV2?.() ?? (process.env.MAX_QUEUE_V2 === '1');
+    const isV2 = mod.isQueueV2?.() ?? (process.env.HOOT_QUEUE_V2 === '1');
     expect(isV2).toBe(true);
   });
 
-  it('FR-1.6: serial queue (MAX_QUEUE_V2=0) processes messages one at a time', async () => {
-    process.env.MAX_QUEUE_V2 = '0';
+  it('FR-1.6: serial queue (HOOT_QUEUE_V2=0) processes messages one at a time', async () => {
+    process.env.HOOT_QUEUE_V2 = '0';
     vi.resetModules();
     const mod = await import('../../src/queue/priority-queue');
 

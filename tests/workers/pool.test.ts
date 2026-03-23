@@ -198,28 +198,28 @@ describe('FR-2.5 — No session leaks after burst', () => {
 });
 
 // ---------------------------------------------------------------------------
-// FR-2.6 — MAX_POOL_ENABLED=0 restores original create/destroy code path
+// FR-2.6 — HOOT_POOL_ENABLED=0 restores original create/destroy code path
 // ---------------------------------------------------------------------------
-describe('FR-2.6 — MAX_POOL_ENABLED=0 disables pool', () => {
+describe('FR-2.6 — HOOT_POOL_ENABLED=0 disables pool', () => {
   afterEach(() => {
-    delete process.env.MAX_POOL_ENABLED;
+    delete process.env.HOOT_POOL_ENABLED;
     vi.resetModules();
   });
 
-  it('FR-2.6: when MAX_POOL_ENABLED=0, sessions are not pooled', async () => {
-    process.env.MAX_POOL_ENABLED = '0';
+  it('FR-2.6: when HOOT_POOL_ENABLED=0, sessions are not pooled', async () => {
+    process.env.HOOT_POOL_ENABLED = '0';
     // The module should export a function or factory that bypasses the pool
     const mod = await import('../../src/workers/pool');
     // Pool should be disabled or return a passthrough
-    const poolEnabled = mod.isPoolEnabled?.() ?? (process.env.MAX_POOL_ENABLED === '1');
+    const poolEnabled = mod.isPoolEnabled?.() ?? (process.env.HOOT_POOL_ENABLED === '1');
     expect(poolEnabled).toBe(false);
   });
 
-  it('FR-2.6: when MAX_POOL_ENABLED=1, pool is enabled', async () => {
-    process.env.MAX_POOL_ENABLED = '1';
+  it('FR-2.6: when HOOT_POOL_ENABLED=1, pool is enabled', async () => {
+    process.env.HOOT_POOL_ENABLED = '1';
     vi.resetModules();
     const mod = await import('../../src/workers/pool');
-    const poolEnabled = mod.isPoolEnabled?.() ?? (process.env.MAX_POOL_ENABLED === '1');
+    const poolEnabled = mod.isPoolEnabled?.() ?? (process.env.HOOT_POOL_ENABLED === '1');
     expect(poolEnabled).toBe(true);
   });
 });
