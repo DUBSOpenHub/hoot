@@ -531,11 +531,11 @@ export default function Home() {
         <div className="reveal" style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center" }}>
           <span className="section-label" style={{ justifyContent: "center" }}>The Scale</span>
           <h2 className="section-title" style={{ textAlign: "center", marginBottom: "1rem" }}>
-            <em>5 workers</em>, {skillCount} superpowers, <em>growing daily</em>
+            <em>5 agents</em>, {skillCount} superpowers, <em>growing daily</em>
           </h2>
           <p className="section-sub" style={{ margin: "0 auto 3rem", textAlign: "center", maxWidth: 600 }}>
-            Hoot runs 5 AI workers in parallel {"\u2014"} each with its own
-            context window, all ready the moment you message. Every worker
+            Hoot runs 5 AI agents in parallel {"\u2014"} each with its own
+            context window, all ready the moment you message. Every agent
             has access to every superpower in the library.
           </p>
 
@@ -546,14 +546,14 @@ export default function Home() {
             maxWidth: 800,
             margin: "0 auto",
           }}>
-            {/* 5 Workers */}
+            {/* 5 Agents */}
             <div className="stat-card" style={{ textAlign: "center", position: "relative", overflow: "hidden" }}>
               <div style={{
                 position: "absolute", inset: 0, opacity: 0.07,
                 background: "radial-gradient(circle at 50% 50%, var(--accent1), transparent 70%)",
               }} />
               <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>5</div>
-              <div className="stat-label" style={{ position: "relative" }}>Parallel Workers</div>
+              <div className="stat-label" style={{ position: "relative" }}>Parallel Agents</div>
               <p style={{ fontSize: ".78rem", color: "var(--muted)", marginTop: ".5rem", lineHeight: 1.5, position: "relative" }}>
                 Five AI sessions, each with its own context window
               </p>
@@ -639,7 +639,7 @@ export default function Home() {
           }}>
             <span style={{ color: "var(--accent1)" }}>You message Hoot</span>
             <span style={{ color: "var(--accent3)" }}>{"\u2192"}</span>
-            <span style={{ color: "var(--accent2)" }}>Workers activate</span>
+            <span style={{ color: "var(--accent2)" }}>Agents activate</span>
             <span style={{ color: "var(--accent3)" }}>{"\u2192"}</span>
             <span style={{ color: "var(--green)" }}>Results delivered</span>
           </div>
@@ -869,7 +869,7 @@ export default function Home() {
             </div>
             <div className="stat-card">
               <div className="stat-number">{dashboardData.status === "ok" ? dashboardData.workers.length : 5}</div>
-              <div className="stat-label">Parallel Workers</div>
+              <div className="stat-label">Parallel Agents</div>
             </div>
             <div className="stat-card">
               <div className="stat-number">{skillCount}</div>
@@ -890,7 +890,7 @@ export default function Home() {
           {/* Workers List — only when live */}
           {dashboardData.status === "ok" && dashboardData.workers.length > 0 && (
             <div className="reveal" style={{ marginBottom: "2rem" }}>
-              <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--subtle)" }}>Active Workers</h3>
+              <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--subtle)" }}>Active Agents</h3>
               <div style={{ display: "grid", gap: "0.75rem" }}>
                 {dashboardData.workers.map((w) => (
                   <div key={w.name} style={{
@@ -931,14 +931,14 @@ export default function Home() {
               <>
                 <div><span style={{ color: "var(--green)" }}>✓</span> Hoot is online and listening</div>
                 <div><span style={{ color: "var(--green)" }}>✓</span> {skillCount} superpowers loaded</div>
-                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.workers.length} workers ready</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.workers.length} agents ready</div>
                 <div><span style={{ color: "var(--green)" }}>✓</span> All systems healthy</div>
                 <div><span style={{ color: "var(--accent3)" }}>→</span> Waiting for your message...</div>
               </>
             ) : (
               <>
                 <div><span style={{ color: "var(--green)" }}>✓</span> {skillCount} superpowers synced from awesome-copilot</div>
-                <div><span style={{ color: "var(--green)" }}>✓</span> 5 parallel workers available</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> 5 parallel agents available</div>
                 <div><span style={{ color: "var(--green)" }}>✓</span> Auto-sync runs daily at 6am</div>
                 <div><span style={{ color: "var(--green)" }}>✓</span> Telegram, TUI, and HTTP channels ready</div>
                 <div><span style={{ color: "var(--accent3)" }}>→</span> Install Hoot to connect this dashboard to your daemon</div>
@@ -974,49 +974,17 @@ export default function Home() {
               </div>
               <div className="code-body" style={{ padding: "1.25rem 1.5rem", position: "relative" }}>
                 <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-                  <span className="cm">{"# clone, install, and start Hoot"}</span>
+                  <span className="cm">{"# install Hoot with one command"}</span>
                   {"\n"}
-                  <span className="fn">{"gh repo clone"}</span>{" "}
-                  <span className="str">{"DUBSOpenHub/hoot"}</span>{" "}
-                  <span className="br">{"&&"}</span>{" "}
-                  <span className="fn">{"cd"}</span>{" "}
-                  <span className="str">{"hoot"}</span>{" "}
-                  <span className="br">{"&&"}</span>{" "}
-                  <span className="fn">{"npm install"}</span>{" "}
-                  <span className="br">{"&&"}</span>{" "}
-                  <span className="fn">{"npm start"}</span>
+                  <span className="fn">{"curl -fsSL"}</span>{" "}
+                  <span className="str">{"https://raw.githubusercontent.com/DUBSOpenHub/hoot/main/install.sh"}</span>{" "}
+                  <span className="br">{"|"}</span>{" "}
+                  <span className="fn">{"bash"}</span>
                 </pre>
               </div>
             </div>
           </div>
 
-          <p style={{
-            fontSize: ".85rem",
-            color: "var(--muted)",
-            marginBottom: "2.5rem",
-            lineHeight: 1.7,
-          }}>
-            Requires{" "}
-            <a href="https://cli.github.com" target="_blank" rel="noopener noreferrer"
-               style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
-              GitHub CLI
-            </a>{" "}
-            and{" "}
-            <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer"
-               style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
-              Node.js
-            </a>
-            . Then run{" "}
-            <code style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: ".8rem",
-              background: "rgba(124,58,237,.15)",
-              padding: ".15rem .5rem",
-              borderRadius: "4px",
-              color: "#c4b5fd",
-            }}>hoot setup</code>{" "}
-            to connect Telegram.
-          </p>
 
           <a
             href="https://github.com/DUBSOpenHub/hoot"

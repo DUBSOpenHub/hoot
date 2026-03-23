@@ -64,7 +64,7 @@ Most AI tools are ephemeral — they forget you the moment the session ends. Hoo
 | Always-on daemon | ✅ | ❌ | ❌ | ❌ |
 | Long-term memory | ✅ Across 5 categories | ❌ | ❌ | ❌ |
 | Multi-channel (mobile + terminal) | ✅ Telegram + TUI + HTTP | ❌ | ❌ | ❌ |
-| Background workers | ✅ Up to 5 concurrent | ❌ | ❌ | ❌ |
+| Background agents | ✅ Up to 5 concurrent | ❌ | ❌ | ❌ |
 | Proactive notifications | ✅ Pushes to you | ❌ | ❌ | ❌ |
 | Model routing (fast/standard/premium) | ✅ Auto-classifies | ❌ | ❌ | ❌ |
 | Local-first, private | ✅ All data on your machine | ❌ | ❌ | ✅ |
@@ -72,7 +72,7 @@ Most AI tools are ephemeral — they forget you the moment the session ends. Hoo
 **Three things no competitor offers:**
 
 - 🧠 **Ambient Awareness** — Hoot remembers what you asked 3 hours ago. Preferences, facts, projects, people, routines — all persisted in local SQLite.
-- ⚡ **Background Agency** — Say "refactor the auth module" from Telegram and walk away. Hoot spawns a worker, does the job, and notifies you when it's done.
+- ⚡ **Background Agency** — Say "refactor the auth module" from Telegram and walk away. Hoot spawns an agent, does the job, and notifies you when it's done.
 - 📱 **Channel Convergence** — Same brain serves Telegram (mobile), TUI (terminal), and HTTP API. One daemon, many interfaces, zero context loss.
 
 ---
@@ -127,18 +127,18 @@ From Telegram or the TUI, just type naturally. Here's what it feels like:
 
 ```
 You: Start working on the auth bug in ~/dev/myapp
-🦉: I'll create a worker session for that. Working directory: ~/dev/myapp.
-    Spawned worker 'auth-fix' — I'll notify you when it's done.
+🦉: I'll create an agent session for that. Working directory: ~/dev/myapp.
+    Spawned agent 'auth-fix' — I'll notify you when it's done.
 
 You: What sessions are running?
-🦉: 1 active worker:
+🦉: 1 active agent:
     • auth-fix (~/dev/myapp) — running for 2m 30s
 
 You: Remember that I prefer TypeScript over JavaScript
 🦉: Got it! Saved to preferences: "Prefers TypeScript over JavaScript"
 
 You: Check on the auth-fix session
-🦉: Worker 'auth-fix' completed! Here's what I did:
+🦉: Agent 'auth-fix' completed! Here's what I did:
     - Fixed the JWT expiration check in src/auth/validate.ts
     - Added missing error handling for expired refresh tokens
     - Updated 3 test files to match
@@ -166,7 +166,7 @@ You: Check on the auth-fix session
 | `/model [name]` | Show or switch the current model |
 | `/memory` | Show stored memories |
 | `/skills` | List installed skills |
-| `/workers` | List active worker sessions |
+| `/agents` | List active agent sessions |
 | `/copy` | Copy last response to clipboard |
 | `/status` | Daemon health check |
 | `/restart` | Restart the daemon |
@@ -178,7 +178,7 @@ You: Check on the auth-fix session
 
 ## 🏗️ Architecture
 
-Here's what happens when you send Hoot a message: your input arrives through one of three channels (Telegram, TUI, or HTTP API), gets routed through the Message Bus to the Orchestrator (Hoot's persistent brain), which classifies the message complexity, selects the right AI model, and either responds directly or spawns a background Worker for heavy tasks. Everything is backed by SQLite for memory, a Circuit Breaker for resilience, and structured logging for observability.
+Here's what happens when you send Hoot a message: your input arrives through one of three channels (Telegram, TUI, or HTTP API), gets routed through the Message Bus to the Orchestrator (Hoot's persistent brain), which classifies the message complexity, selects the right AI model, and either responds directly or spawns a background agent for heavy tasks. Everything is backed by SQLite for memory, a Circuit Breaker for resilience, and structured logging for observability.
 
 ```
 ╔═══════════════════════════════════════════════════════════════╗
@@ -201,8 +201,8 @@ Here's what happens when you send Hoot a message: your input arrives through one
 ║         └────────────┬─────────────┘                          ║
 ║                      ▼                                        ║
 ║         ┌──────────────────────┐     ┌──────────────────┐    ║
-║         │   Orchestrator       │────▶│  Worker Pool      │    ║
-║         │   (persistent brain) │     │  (warm sessions)  │    ║
+║         │   Orchestrator       │────▶│  Agent Pool        │    ║
+║         │   (persistent brain) │     │  (warm sessions)   │    ║
 ║         │   + Circuit Breaker  │     │  checkout/return   │    ║
 ║         └──────────────────────┘     └──────────────────┘    ║
 ║                      │                                        ║
@@ -219,10 +219,10 @@ Here's what happens when you send Hoot a message: your input arrives through one
 
 - **Message Bus** — Typed EventEmitter decoupling all components via pub/sub
 - **Priority Queue** — 3-lane concurrent processing (fast/standard/premium) with rate limiting
-- **Worker Pool** — Pre-warmed AI sessions for instant background task dispatch
+- **Agent Pool** — Pre-warmed AI sessions for instant background task dispatch
 - **Circuit Breaker** — Auto-trips after 3 SDK failures, self-heals after 30s
 - **Plugin System** — Drop plugins in `~/.hoot/plugins/` with hot-reload
-- **Audit Log** — Every auth rejection, model switch, and worker event logged to SQLite
+- **Audit Log** — Every auth rejection, model switch, and agent event logged to SQLite
 
 ---
 
@@ -286,7 +286,7 @@ All configuration lives in `~/.hoot/.env`. Every variable is optional — Hoot w
 | `COPILOT_MODEL` | `claude-sonnet-4.6` | Default AI model |
 | `WORKER_TIMEOUT` | `600000` | Worker session timeout in ms (10 min) |
 | `HOOT_QUEUE_V2` | `1` | Enable concurrent 3-lane priority queue |
-| `HOOT_POOL_ENABLED` | `1` | Enable worker session pool with warm sessions |
+| `HOOT_POOL_ENABLED` | `1` | Enable agent session pool with warm sessions |
 | `HOOT_ENCRYPT_DB` | `0` | Enable XOR-obfuscated SQLite at rest |
 | `HOOT_LOG_FORMAT` | `json` | Logging format: `json`, `pretty`, or `legacy` |
 | `HOOT_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
@@ -298,13 +298,13 @@ All configuration lives in `~/.hoot/.env`. Every variable is optional — Hoot w
 
 ## 🔒 Security
 
-Hoot takes security seriously. Every API call requires a bearer token, Telegram is user-ID whitelisted, and workers are blocked from sensitive directories like `~/.ssh` and `~/.aws`.
+Hoot takes security seriously. Every API call requires a bearer token, Telegram is user-ID whitelisted, and agents are blocked from sensitive directories like `~/.ssh` and `~/.aws`.
 
 | Feature | Status |
 |---------|--------|
 | Bearer token auth (API) | ✅ Always on |
 | Telegram user ID whitelist | ✅ Always on |
-| Worker directory blocking (9 sensitive dirs) | ✅ Always on |
+| Agent directory blocking (9 sensitive dirs) | ✅ Always on |
 | Structured audit logging | ✅ Always on |
 | Rate limiting (100 req/min) | ✅ Always on |
 | CORS restriction (localhost only) | ✅ Always on |
@@ -379,10 +379,10 @@ Yes — the default Copilot SDK backend requires cloud connectivity. But all sto
 Absolutely. Telegram is optional. The TUI and HTTP API work without it.
 
 **How much memory does it use?**
-~200MB base + ~400MB per active worker. Each worker is a full Copilot SDK session — not a lightweight thread, a real AI session with its own context, tools, and file access. 5 concurrent workers = ~2.2GB total. This is configurable via `HOOT_CONCURRENT_WORKERS` in `.env`.
+~200MB base + ~400MB per active agent. Each agent is a full Copilot SDK session — not a lightweight thread, a real AI session with its own context, tools, and file access. 5 concurrent agents = ~2.2GB total. This is configurable via `HOOT_CONCURRENT_WORKERS` in `.env`.
 
 **How many things can it do in parallel?**
-5 concurrent workers by default. Each worker can independently run commands, edit files, and call tools. Workers can also invoke Stampede (up to 20 parallel CLI agents in tmux panes), so one Telegram message can theoretically orchestrate 100 parallel agents — though API rate limits are the practical ceiling.
+5 concurrent agents by default. Each agent can independently run commands, edit files, and call tools. Agents can also invoke Stampede (up to 20 parallel CLI agents in tmux panes), so one Telegram message can theoretically orchestrate 100 parallel agents — though API rate limits are the practical ceiling.
 
 **What models does Hoot use?**
 3-tier routing: GPT-4.1 (fast/trivial), Claude Sonnet 4.6 (standard/coding), Claude Opus 4.6 (premium/complex). The LLM classifier auto-selects with keyword overrides.
@@ -412,6 +412,6 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instruct
 
 🐙 Created by **Gregg Cochran** ([@DUBSOpenHub](https://github.com/DUBSOpenHub)) — an AI-native builder who shipped this entire daemon, 265 superpowers (synced from [awesome-copilot](https://github.com/github/awesome-copilot)), and a Telegram bot using nothing but the [GitHub Copilot CLI](https://docs.github.com/copilot/concepts/agents/about-copilot-cli). No IDE. No hand-written code. Just one terminal and up to 100 AI agents.
 
-**The magic of Hoot 🦉:** You message an owl on your phone. The owl thinks, spawns workers, writes code, runs tests, and messages you back when it's done. You walk away. You come back. The work is finished. That's it. That's the whole product. An owl that never sleeps, never forgets, and does what you tell it — from anywhere.
+**The magic of Hoot 🦉:** You message an owl on your phone. The owl thinks, spawns agents, writes code, runs tests, and messages you back when it's done. You walk away. You come back. The work is finished. That's it. That's the whole product. An owl that never sleeps, never forgets, and does what you tell it — from anywhere.
 
 **Why this matters:** You don't need to be a developer to build things that help you in your role. Find the leverage. Gain the velocity. The CLI is the equalizer — if you can describe what you need, you can ship it. Hoot exists because one person asked "what if I had an AI that never went offline?" and then built it. You can do the same. 🦉
