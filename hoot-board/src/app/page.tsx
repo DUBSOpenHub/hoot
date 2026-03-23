@@ -92,7 +92,7 @@ const PROJECTS = [
   },
   {
     icon: "\u{1F9E9}",
-    title: "220+ Superpowers",
+    title: "Community Superpowers",
     desc: "Connected to the awesome-copilot community. New abilities sync automatically every day.",
     gradient: "linear-gradient(135deg,#0a1a0c,#0d2818)",
     radial:
@@ -120,7 +120,7 @@ const TIMELINE = [
   },
   {
     icon: "\u26A1",
-    when: "220+ superpowers connected",
+    when: "Superpowers connected",
     title: "Awesome Copilot",
     desc: "Connected to the open source community's library of skills, tools, and agents.",
   },
@@ -248,15 +248,31 @@ export default function Home() {
     skillCount: number;
   }>({ status: "unknown", workers: [], circuitBreakers: {}, skillCount: 0 });
 
-  const skillCount = dashboardData.skillCount || 220;
+  const [awesomeCopilotCount, setAwesomeCopilotCount] = useState(0);
+  const skillCount = dashboardData.skillCount || awesomeCopilotCount || 0;
+  const skillLabel = skillCount > 0 ? `${skillCount} Superpowers and Growing` : "Superpowers from awesome-copilot";
   const typingPhrases = [
     TYPING_PHRASES_STATIC[0],
-    `${skillCount} Superpowers and Growing`,
+    skillLabel,
     ...TYPING_PHRASES_STATIC.slice(1),
   ];
   const typedText = useTypingEffect(typingPhrases);
 
-  /* Dashboard polling */
+  /* Fetch skill count from GitHub API (always available, no daemon needed) */
+  useEffect(() => {
+    const fetchAwesomeCount = async () => {
+      try {
+        const res = await fetch("https://api.github.com/repos/github/awesome-copilot/contents/skills");
+        if (res.ok) {
+          const items = await res.json();
+          if (Array.isArray(items)) setAwesomeCopilotCount(items.length);
+        }
+      } catch { /* ignore */ }
+    };
+    fetchAwesomeCount();
+  }, []);
+
+  /* Dashboard polling (local daemon) */
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
@@ -274,7 +290,7 @@ export default function Home() {
         const res = await fetch("http://127.0.0.1:7777/skills", { mode: "cors" });
         if (res.ok) {
           const skills = await res.json();
-          setDashboardData((prev) => ({ ...prev, skillCount: Array.isArray(skills) ? skills.length : 220 }));
+          if (Array.isArray(skills)) setDashboardData((prev) => ({ ...prev, skillCount: skills.length }));
         }
       } catch { /* ignore */ }
     };
@@ -477,7 +493,7 @@ export default function Home() {
           <p className="hero-desc">
             Your personal AI that runs 24/7 and reaches you on Telegram.
             Hoot builds, writes, researches, and automates {"\u2014"} powered
-            by 220+ community superpowers from{" "}
+            by {skillCount > 0 ? `${skillCount}` : ""} community superpowers from{" "}
             <a href="https://github.com/github/awesome-copilot" target="_blank" rel="noopener noreferrer"
                style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
               awesome-copilot
@@ -700,7 +716,7 @@ export default function Home() {
                   <span className="br">{"{"}</span>
                   {"\n"}
                   {"  "}superpowers<span className="br">:</span>{" "}
-                  <span className="num">220</span>
+                  <span className="num">{skillCount || "..."}</span>
                   <span className="br">,</span>
                   {"\n"}
                   {"  "}source<span className="br">:</span>{" "}

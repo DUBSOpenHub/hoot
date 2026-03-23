@@ -5,10 +5,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Node.js ≥18](https://img.shields.io/badge/node-%E2%89%A518-232F3E.svg)
 ![Default backend: Copilot SDK](https://img.shields.io/badge/default%20backend-Copilot%20SDK-000000.svg)
+[![Superpowers from awesome-copilot](https://img.shields.io/github/directory-file-count/github/awesome-copilot/skills?type=dir&label=superpowers&color=brightgreen)](https://github.com/github/awesome-copilot/tree/main/skills)
 
 <img width="503" height="257" alt="Screenshot 2026-03-23 at 10 49 23 AM" src="https://github.com/user-attachments/assets/a7cfa818-0e37-468a-b969-be46d298d146" />
 
 **Your personal AI daemon — it runs 24/7 in the background, remembers your preferences, handles tasks while you sleep, and reaches you on Telegram or your terminal.** Ships with [GitHub Copilot SDK](https://github.com/github/copilot-sdk) as the default backend; swap in Ollama, Anthropic, or OpenAI via the `AIProvider` interface.
+
+> **🧩 Powered by [awesome-copilot](https://github.com/github/awesome-copilot)** — Hoot ships with every skill, tool, and agent from the community catalog and syncs new ones daily. Code generation, testing, DevOps, docs, AI agents, cloud automation — all built in from day one.
 
 > **🤖 Built by 109 AI agents across 10 models in 12 hours.**
 > Hoot was designed, implemented, tested, and hardened by a swarm of AI agents orchestrated through 33 primary agents and 76 sub-agents spanning Claude Opus, Sonnet, GPT-5.x, and Gemini. 233 tests. Zero human-written source code.
@@ -231,7 +234,7 @@ Hoot has two extension mechanisms:
 
 ### Skills (no code — teach Hoot new knowledge)
 
-Hoot ships with 220+ skills from [github/awesome-copilot](https://github.com/github/awesome-copilot) — the community catalog of Copilot customizations. New skills sync automatically via daily auto-sync, so Hoot's capabilities grow without you lifting a finger.
+Hoot ships with every skill from [github/awesome-copilot](https://github.com/github/awesome-copilot) — the community catalog of Copilot customizations. New skills sync automatically via daily auto-sync, so Hoot's capabilities grow without you lifting a finger.
 
 Skills are markdown files that give Hoot new capabilities by adding instructions to its system prompt. You can also create your own — drop a `SKILL.md` into `~/.hoot/skills/your-skill/`:
 
@@ -389,7 +392,7 @@ Absolutely. Telegram is optional. The TUI and HTTP API work without it.
 3-tier routing: GPT-4.1 (fast/trivial), Claude Sonnet 4.6 (standard/coding), Claude Opus 4.6 (premium/complex). The LLM classifier auto-selects with keyword overrides.
 
 **Can I add custom skills?**
-Yes — Hoot ships with 220+ skills from [awesome-copilot](https://github.com/github/awesome-copilot) and syncs new ones daily. You can also create your own: drop a markdown file in `~/.hoot/skills/` or a TypeScript plugin in `~/.hoot/plugins/`.
+Yes — Hoot ships with every skill from [awesome-copilot](https://github.com/github/awesome-copilot) and syncs new ones daily. You can also create your own: drop a markdown file in `~/.hoot/skills/` or a TypeScript plugin in `~/.hoot/plugins/`.
 
 **Why is the config in `~/.hoot/`?**
 The config directory is now `~/.hoot/`. If you're upgrading from an older version that used `~/.max/`, Hoot automatically migrates your config, database, skills, and plugins on first run. No manual steps needed.
@@ -411,7 +414,7 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instruct
 
 ---
 
-🐙 Created by **Gregg Cochran** ([@DUBSOpenHub](https://github.com/DUBSOpenHub)) — an AI-native builder who shipped this entire daemon, 220+ superpowers (synced from [awesome-copilot](https://github.com/github/awesome-copilot)), and a Telegram bot using nothing but the [GitHub Copilot CLI](https://docs.github.com/copilot/concepts/agents/about-copilot-cli). No IDE. No hand-written code. Just one terminal and up to 100 AI agents.
+🐙 Created by **Gregg Cochran** ([@DUBSOpenHub](https://github.com/DUBSOpenHub)) — an AI-native builder who shipped this entire daemon, every superpower from [awesome-copilot](https://github.com/github/awesome-copilot), and a Telegram bot using nothing but the [GitHub Copilot CLI](https://docs.github.com/copilot/concepts/agents/about-copilot-cli). No IDE. No hand-written code. Just one terminal and up to 100 AI agents.
 
 **The magic of Hoot 🦉:** You message an owl on your phone. The owl thinks, spawns agents, writes code, runs tests, and messages you back when it's done. You walk away. You come back. The work is finished. That's it. That's the whole product. An owl that never sleeps, never forgets, and does what you tell it — from anywhere.
 
