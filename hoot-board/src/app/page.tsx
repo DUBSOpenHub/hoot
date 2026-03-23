@@ -8,7 +8,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 
 const TYPING_PHRASES = [
   "The AI That Never Sleeps",
-  "265 Superpowers, One Owl",
+  "265 Superpowers and Growing",
   "Message Me From Your Phone",
   "I Ship While You Sleep",
   "Powered by Awesome Copilot",
