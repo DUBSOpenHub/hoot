@@ -1,13 +1,12 @@
 # 🦉 Hoot — The AI That Never Sleeps
 
-<img width="503" height="257" alt="Screenshot 2026-03-23 at 10 49 23 AM" src="https://github.com/user-attachments/assets/a7cfa818-0e37-468a-b969-be46d298d146" />
-
-
 [![npm version](https://img.shields.io/npm/v/hoot.svg)](https://www.npmjs.com/package/hoot)
 [![CI](https://github.com/DUBSOpenHub/hoot/actions/workflows/ci.yml/badge.svg)](https://github.com/DUBSOpenHub/hoot/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Node.js ≥18](https://img.shields.io/badge/node-%E2%89%A518-232F3E.svg)
 ![Default backend: Copilot SDK](https://img.shields.io/badge/default%20backend-Copilot%20SDK-000000.svg)
+
+<img width="503" height="257" alt="Screenshot 2026-03-23 at 10 49 23 AM" src="https://github.com/user-attachments/assets/a7cfa818-0e37-468a-b969-be46d298d146" />
 
 **Your personal AI daemon — it runs 24/7 in the background, remembers your preferences, handles tasks while you sleep, and reaches you on Telegram or your terminal.** Ships with [GitHub Copilot SDK](https://github.com/github/copilot-sdk) as the default backend; swap in Ollama, Anthropic, or OpenAI via the `AIProvider` interface.
 
