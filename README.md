@@ -58,17 +58,17 @@ Hoot is like having a developer friend who never goes home. It runs on your comp
 
 Most AI tools are ephemeral — they forget you the moment the session ends. Hoot is a **daemon**: a persistent background process that runs 24/7 on your machine.
 
-| Capability | Hoot 🦉 | ChatGPT | Cursor | Claude Code |
-|-----------|---------|---------|--------|-------------|
-| Always-on daemon | ✅ | ❌ | ❌ | ❌ |
-| Long-term memory | ✅ Across 5 categories | ❌ | ❌ | ❌ |
-| Multi-channel (mobile + terminal) | ✅ Telegram + TUI + HTTP | ❌ | ❌ | ❌ |
-| Background agents | ✅ Up to 5 concurrent | ❌ | ❌ | ❌ |
-| Proactive notifications | ✅ Pushes to you | ❌ | ❌ | ❌ |
-| Model routing (fast/standard/premium) | ✅ Auto-classifies | ❌ | ❌ | ❌ |
-| Local-first, private | ✅ All data on your machine | ❌ | ❌ | ✅ |
+| Capability | Hoot 🦉 |
+|-----------|---------|
+| Always-on daemon | ✅ Runs 24/7 in the background |
+| Long-term memory | ✅ Across 5 categories |
+| Multi-channel (mobile + terminal) | ✅ Telegram + TUI + HTTP |
+| Background agents | ✅ Up to 5 concurrent |
+| Proactive notifications | ✅ Pushes to you |
+| Model routing (fast/standard/premium) | ✅ Auto-classifies |
+| Local-first, private | ✅ All data on your machine |
 
-**Three things no competitor offers:**
+**What makes Hoot special:**
 
 - 🧠 **Ambient Awareness** — Hoot remembers what you asked 3 hours ago. Preferences, facts, projects, people, routines — all persisted in local SQLite.
 - ⚡ **Background Agency** — Say "refactor the auth module" from Telegram and walk away. Hoot spawns an agent, does the job, and notifies you when it's done.
