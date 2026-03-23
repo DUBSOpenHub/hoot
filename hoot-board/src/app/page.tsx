@@ -390,6 +390,49 @@ function Confetti() {
   );
 }
 
+/* Superpower burst easter egg — owls & lightning explode from click point */
+const BURST_EMOJI = ["🦉", "⚡", "🦉", "⚡", "🦉", "⚡", "🦉", "⚡", "🦉", "⚡", "🦉", "⚡"];
+
+function SuperpowerBurst({ id, x, y, onDone }: { id: number; x: number; y: number; onDone: (id: number) => void }) {
+  useEffect(() => {
+    const timer = setTimeout(() => onDone(id), 2000);
+    return () => clearTimeout(timer);
+  }, [id, onDone]);
+
+  const particles = Array.from({ length: 14 }, (_, i) => {
+    const angle = (i * 25.7) + (Math.random() * 15 - 7.5);
+    const dist = 50 + Math.random() * 160;
+    const size = 18 + Math.random() * 22;
+    const delay = Math.random() * 0.2;
+    const dur = 0.7 + Math.random() * 0.7;
+    const emoji = BURST_EMOJI[i % BURST_EMOJI.length];
+    const spin = Math.random() > 0.5 ? 360 : -360;
+    return { angle, dist, size, delay, dur, emoji, spin };
+  });
+
+  return (
+    <div style={{ position: "fixed", left: x, top: y, pointerEvents: "none", zIndex: 10000 }}>
+      {particles.map((p, i) => (
+        <span
+          key={i}
+          className="burst-particle"
+          style={{
+            position: "absolute",
+            fontSize: `${p.size}px`,
+            ["--burst-angle" as string]: `${p.angle}deg`,
+            ["--burst-dist" as string]: `${p.dist}px`,
+            ["--burst-spin" as string]: `${p.spin}deg`,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.dur}s`,
+          }}
+        >
+          {p.emoji}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /* ---------------------------------------------
    Main Page
    --------------------------------------------- */
@@ -402,6 +445,8 @@ export default function Home() {
 
   const [showConfetti, setShowConfetti] = useState(false);
   const [showAscii, setShowAscii] = useState(false);
+  const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([]);
+  const burstIdRef = useRef(0);
   const [navScrolled, setNavScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showBackTop, setShowBackTop] = useState(false);
@@ -413,7 +458,7 @@ export default function Home() {
   }>({ status: "unknown", workers: [], circuitBreakers: {}, skillCount: 0 });
 
   const [awesomeCopilotCount, setAwesomeCopilotCount] = useState(0);
-  const skillCount = dashboardData.skillCount || awesomeCopilotCount || 0;
+  const skillCount = dashboardData.skillCount || awesomeCopilotCount || 220;
   const skillLabel = skillCount > 0 ? `${skillCount} Superpowers and Growing` : "Superpowers from awesome-copilot";
   const typingPhrases = [
     TYPING_PHRASES_STATIC[0],
@@ -529,9 +574,19 @@ export default function Home() {
     }
   }, []);
 
+  /* Click superpowers -> owl & lightning burst */
+  const handleSuperpowerClick = useCallback((e: React.MouseEvent) => {
+    const id = burstIdRef.current++;
+    setBursts(prev => [...prev, { id, x: e.clientX, y: e.clientY }]);
+  }, []);
+  const removeBurst = useCallback((id: number) => {
+    setBursts(prev => prev.filter(b => b.id !== id));
+  }, []);
+
   return (
     <div ref={mainRef}>
       {showConfetti && <Confetti />}
+      {bursts.map(b => <SuperpowerBurst key={b.id} id={b.id} x={b.x} y={b.y} onDone={removeBurst} />)}
 
       {showAscii && (
         <div
@@ -657,7 +712,7 @@ export default function Home() {
           <p className="hero-desc">
             Your personal AI that runs 24/7 and reaches you on Telegram.
             Hoot builds, writes, researches, and automates {"\u2014"} powered
-            by {skillCount > 0 ? `${skillCount}` : ""} community superpowers from{" "}
+            by {skillCount} community superpowers from{" "}
             <a href="https://github.com/github/awesome-copilot" target="_blank" rel="noopener noreferrer"
                style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
               awesome-copilot
@@ -740,10 +795,11 @@ export default function Home() {
             </div>
 
             {/* Superpowers */}
-            <div className="stat-card" style={{
+            <div className="stat-card" onClick={handleSuperpowerClick} style={{
               textAlign: "center", position: "relative", overflow: "hidden",
               borderColor: "rgba(124,58,237,.4)",
               boxShadow: "0 0 40px rgba(124,58,237,.1)",
+              cursor: "pointer",
             }}>
               <div style={{
                 position: "absolute", inset: 0, opacity: 0.1,
@@ -843,7 +899,7 @@ export default function Home() {
             </p>
 
             <div className="about-stats">
-              <div className="stat-card">
+              <div className="stat-card" onClick={handleSuperpowerClick} style={{ cursor: "pointer" }}>
                 <div className="stat-number"><AnimatedNumber value={skillCount} duration={1800} /></div>
                 <div className="stat-label">Superpowers</div>
               </div>
@@ -919,7 +975,7 @@ export default function Home() {
       <section id="skills" className="hoot-section">
         <div className="skills-header reveal">
           <span className="section-label">Superpowers</span>
-          <h2 className="section-title">
+          <h2 className="section-title" onClick={handleSuperpowerClick} style={{ cursor: "pointer" }}>
             <AnimatedNumber value={skillCount} duration={2000} /> Superpowers, <em>One Owl</em>
           </h2>
           <p className="section-sub">
@@ -1056,7 +1112,7 @@ export default function Home() {
               <div className="stat-number"><AnimatedNumber value={dashboardData.status === "ok" ? dashboardData.workers.length : 5} duration={800} /></div>
               <div className="stat-label">Parallel Agents</div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card" onClick={handleSuperpowerClick} style={{ cursor: "pointer" }}>
               <div className="stat-number"><AnimatedNumber value={skillCount} duration={1800} /></div>
               <div className="stat-label">Superpowers</div>
             </div>
