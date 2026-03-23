@@ -3,6 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/hoot.svg)](https://www.npmjs.com/package/hoot)
 [![CI](https://github.com/DUBSOpenHub/hoot/actions/workflows/ci.yml/badge.svg)](https://github.com/DUBSOpenHub/hoot/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Live Dashboard](https://img.shields.io/badge/📊_Live_Dashboard-Visit-blue?style=for-the-badge)](https://dubsopenhub.github.io/hoot/)
 ![Node.js ≥18](https://img.shields.io/badge/node-%E2%89%A518-232F3E.svg)
 ![Default backend: Copilot SDK](https://img.shields.io/badge/default%20backend-Copilot%20SDK-000000.svg)
 
@@ -88,7 +89,7 @@ npm install -g hoot
 hoot setup
 ```
 
-This creates `~/.max/` — the Hoot config directory. It stores your config, database, skills, and plugins.
+This creates `~/.hoot/` — the Hoot config directory. It stores your config, database, skills, and plugins.
 
 ### Step 3: Install the Copilot CLI
 
@@ -216,7 +217,7 @@ Here's what happens when you send Hoot a message: your input arrives through one
 - **Priority Queue** — 3-lane concurrent processing (fast/standard/premium) with rate limiting
 - **Worker Pool** — Pre-warmed AI sessions for instant background task dispatch
 - **Circuit Breaker** — Auto-trips after 3 SDK failures, self-heals after 30s
-- **Plugin System** — Drop plugins in `~/.max/plugins/` with hot-reload
+- **Plugin System** — Drop plugins in `~/.hoot/plugins/` with hot-reload
 - **Audit Log** — Every auth rejection, model switch, and worker event logged to SQLite
 
 ---
@@ -227,7 +228,7 @@ Hoot has two extension mechanisms:
 
 ### Skills (no code — teach Hoot new knowledge)
 
-Skills are markdown files that give Hoot new capabilities by adding instructions to its system prompt. Drop a `SKILL.md` into `~/.max/skills/your-skill/`:
+Skills are markdown files that give Hoot new capabilities by adding instructions to its system prompt. Drop a `SKILL.md` into `~/.hoot/skills/your-skill/`:
 
 ```markdown
 ---
@@ -242,7 +243,7 @@ Or discover and install community skills: just ask Hoot "find a skill for X".
 
 ### Plugins (TypeScript code — hook into events)
 
-Plugins are Node.js modules that register tools, subscribe to bus events, and add API routes. Drop an `index.js` into `~/.max/plugins/your-plugin/`:
+Plugins are Node.js modules that register tools, subscribe to bus events, and add API routes. Drop an `index.js` into `~/.hoot/plugins/your-plugin/`:
 
 ```typescript
 import type { HootPlugin } from 'hoot';
@@ -265,13 +266,13 @@ const plugin: HootPlugin = {
 export default plugin;
 ```
 
-Enable with `MAX_PLUGINS_ENABLED=1` in `~/.max/.env`. Plugins hot-reload on file changes.
+Enable with `HOOT_PLUGINS_ENABLED=1` in `~/.hoot/.env`. Plugins hot-reload on file changes.
 
 ---
 
 ## ⚙️ Configuration
 
-All configuration lives in `~/.max/.env`. Every variable is optional — Hoot works with zero config.
+All configuration lives in `~/.hoot/.env`. Every variable is optional — Hoot works with zero config.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -280,14 +281,14 @@ All configuration lives in `~/.max/.env`. Every variable is optional — Hoot wo
 | `API_PORT` | `7777` | Local HTTP API port |
 | `COPILOT_MODEL` | `claude-sonnet-4.6` | Default AI model |
 | `WORKER_TIMEOUT` | `600000` | Worker session timeout in ms (10 min) |
-| `MAX_QUEUE_V2` | `1` | Enable concurrent 3-lane priority queue |
-| `MAX_POOL_ENABLED` | `1` | Enable worker session pool with warm sessions |
-| `MAX_ENCRYPT_DB` | `0` | Enable XOR-obfuscated SQLite at rest |
-| `MAX_LOG_FORMAT` | `json` | Logging format: `json`, `pretty`, or `legacy` |
-| `MAX_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
-| `MAX_PLUGINS_ENABLED` | `0` | Load plugins from `~/.max/plugins/` |
-| `MAX_SELF_EDIT` | `0` | Allow Hoot to modify its own source files |
-| `MAX_TUI_DEBUG` | `0` | Enable TUI debug logging |
+| `HOOT_QUEUE_V2` | `1` | Enable concurrent 3-lane priority queue |
+| `HOOT_POOL_ENABLED` | `1` | Enable worker session pool with warm sessions |
+| `HOOT_ENCRYPT_DB` | `0` | Enable XOR-obfuscated SQLite at rest |
+| `HOOT_LOG_FORMAT` | `json` | Logging format: `json`, `pretty`, or `legacy` |
+| `HOOT_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
+| `HOOT_PLUGINS_ENABLED` | `0` | Load plugins from `~/.hoot/plugins/` |
+| `HOOT_SELF_EDIT` | `0` | Allow Hoot to modify its own source files |
+| `HOOT_TUI_DEBUG` | `0` | Enable TUI debug logging |
 
 ---
 
@@ -303,7 +304,7 @@ Hoot takes security seriously. Every API call requires a bearer token, Telegram 
 | Structured audit logging | ✅ Always on |
 | Rate limiting (100 req/min) | ✅ Always on |
 | CORS restriction (localhost only) | ✅ Always on |
-| Encryption at rest | 🔒 Opt-in (`MAX_ENCRYPT_DB=1`) |
+| Encryption at rest | 🔒 Opt-in (`HOOT_ENCRYPT_DB=1`) |
 | Token rotation | ✅ `POST /auth/rotate` |
 | Prompt length limit (50K chars) | ✅ Always on |
 | Circuit breaker (SDK resilience) | ✅ Always on |
@@ -314,7 +315,7 @@ Full details: [SECURITY.md](SECURITY.md) · [Threat Model](docs/threat-model.md)
 
 ## 📊 Observability
 
-When `MAX_LOG_FORMAT=json` (default), all output is structured JSON piped to stdout:
+When `HOOT_LOG_FORMAT=json` (default), all output is structured JSON piped to stdout:
 
 ```json
 {"ts":"2026-03-21T06:29:13Z","level":"info","component":"orchestrator","msg":"Message queued","correlationId":"abc-123"}
@@ -374,7 +375,7 @@ Yes — the default Copilot SDK backend requires cloud connectivity. But all sto
 Absolutely. Telegram is optional. The TUI and HTTP API work without it.
 
 **How much memory does it use?**
-~200MB base + ~400MB per active worker. Each worker is a full Copilot SDK session — not a lightweight thread, a real AI session with its own context, tools, and file access. 5 concurrent workers = ~2.2GB total. This is configurable via `MAX_CONCURRENT_WORKERS` in `.env`.
+~200MB base + ~400MB per active worker. Each worker is a full Copilot SDK session — not a lightweight thread, a real AI session with its own context, tools, and file access. 5 concurrent workers = ~2.2GB total. This is configurable via `HOOT_CONCURRENT_WORKERS` in `.env`.
 
 **How many things can it do in parallel?**
 5 concurrent workers by default. Each worker can independently run commands, edit files, and call tools. Workers can also invoke Stampede (up to 20 parallel CLI agents in tmux panes), so one Telegram message can theoretically orchestrate 100 parallel agents — though API rate limits are the practical ceiling.
@@ -383,10 +384,10 @@ Absolutely. Telegram is optional. The TUI and HTTP API work without it.
 3-tier routing: GPT-4.1 (fast/trivial), Claude Sonnet 4.6 (standard/coding), Claude Opus 4.6 (premium/complex). The LLM classifier auto-selects with keyword overrides.
 
 **Can I add custom skills?**
-Yes — drop a markdown file in `~/.max/skills/` or a TypeScript plugin in `~/.max/plugins/`.
+Yes — drop a markdown file in `~/.hoot/skills/` or a TypeScript plugin in `~/.hoot/plugins/`.
 
-**Why is the config in `~/.max/`?**
-Backward compatibility. Renaming it would break existing installations, so we keep `~/.max/` as the config directory. Everything inside is Hoot's.
+**Why is the config in `~/.hoot/`?**
+The config directory is now `~/.hoot/`. If you're upgrading from an older version that used `~/.max/`, Hoot automatically migrates your config, database, skills, and plugins on first run. No manual steps needed.
 
 **What is the Copilot SDK?**
 The [GitHub Copilot SDK](https://github.com/github/copilot-sdk) is a Node.js library that provides AI model access, session management, tool calling, and streaming. It's Hoot's default `AIProvider` backend. The `AIProvider` interface (`src/providers/types.ts`) lets you swap in any backend — implement `createSession()`, `sendAndWait()`, and `listModels()` and Hoot works with your provider instead.
@@ -405,7 +406,7 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instruct
 
 ---
 
-🐙 Created by **Gregg Cochran** ([@DUBSOpenHub](https://github.com/DUBSOpenHub)) — an AI-native builder who shipped this entire daemon, 20 skills, and a Telegram bot using nothing but the [GitHub Copilot CLI](https://docs.github.com/copilot/concepts/agents/about-copilot-cli). No IDE. No hand-written code. Just one terminal and ~130 AI agents.
+🐙 Created by **Gregg Cochran** ([@DUBSOpenHub](https://github.com/DUBSOpenHub)) — an AI-native builder who shipped this entire daemon, 265 superpowers (synced from [awesome-copilot](https://github.com/github/awesome-copilot)), and a Telegram bot using nothing but the [GitHub Copilot CLI](https://docs.github.com/copilot/concepts/agents/about-copilot-cli). No IDE. No hand-written code. Just one terminal and up to 100 AI agents.
 
 **The magic of Hoot 🦉:** You message an owl on your phone. The owl thinks, spawns workers, writes code, runs tests, and messages you back when it's done. You walk away. You come back. The work is finished. That's it. That's the whole product. An owl that never sleeps, never forgets, and does what you tell it — from anywhere.
 
