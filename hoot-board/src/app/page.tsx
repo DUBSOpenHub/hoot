@@ -1046,8 +1046,8 @@ export default function Home() {
           <span className="footer-gradient">Gregg Cochran</span>
         </p>
         <p className="footer-tagline">
-          An AI-native builder who shipped this with the GitHub Copilot
-          CLI and up to 100 AI agents working in parallel.
+          🤖 Built by 109 AI agents across 10 models — shipped with the GitHub Copilot
+          CLI. No IDE. No hand-written code.
         </p>
         <p className="footer-mantra">
           If you can describe what you want, you can build it.{" "}
