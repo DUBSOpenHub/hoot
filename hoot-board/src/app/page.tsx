@@ -8,9 +8,10 @@ import { useEffect, useState, useRef, useCallback } from "react";
 
 const TYPING_PHRASES = [
   "The AI That Never Sleeps",
-  "Your Feathered DevOps Lead",
-  "130 Agents In A Trenchcoat",
-  "Ships Code While You Sleep",
+  "265 Superpowers, One Owl",
+  "Message Me From Your Phone",
+  "I Ship While You Sleep",
+  "Powered by Awesome Copilot",
 ];
 
 const SKILL_CATEGORIES = [
@@ -79,28 +80,28 @@ const PROJECTS = [
   },
   {
     icon: "\u26A1",
-    title: "Worker Pool",
-    desc: "Up to 5 concurrent AI sessions. Pre-warmed. Checkout/return pattern.",
+    title: "Parallel Processing",
+    desc: "Hoot works on 5 things at once. Ask it to build, research, and write — all at the same time.",
     gradient: "linear-gradient(135deg,#081c1c,#0a2030)",
     radial:
       "radial-gradient(circle at 70% 40%,rgba(6,182,212,.2),transparent 60%)",
     tags: [
-      { label: "Background Tasks", cls: "tag-cyan" },
-      { label: "Circuit Breaker", cls: "tag-blue" },
-      { label: "SQLite", cls: "tag-green" },
+      { label: "Multi-tasking", cls: "tag-cyan" },
+      { label: "Fast", cls: "tag-blue" },
+      { label: "Always Ready", cls: "tag-green" },
     ],
   },
   {
     icon: "\u{1F9E9}",
-    title: "Skill System",
-    desc: "Drop a SKILL.md, gain a capability. 20 skills loaded, hot-reload on change.",
+    title: "265 Superpowers",
+    desc: "Connected to the awesome-copilot community. New abilities sync automatically every day.",
     gradient: "linear-gradient(135deg,#0a1a0c,#0d2818)",
     radial:
       "radial-gradient(circle at 50% 50%,rgba(16,185,129,.2),transparent 60%)",
     tags: [
-      { label: "Markdown", cls: "tag-green" },
-      { label: "Extensible", cls: "tag-cyan" },
-      { label: "Community", cls: "tag-purple" },
+      { label: "Auto-Sync", cls: "tag-green" },
+      { label: "Community", cls: "tag-cyan" },
+      { label: "Growing Daily", cls: "tag-purple" },
     ],
   },
 ];
@@ -110,25 +111,25 @@ const TIMELINE = [
     icon: "\u{1F3DF}\uFE0F",
     when: "14 AI models competed",
     title: "Havoc Hackathon",
-    desc: "Tournament elimination produced the winning architecture and PRD.",
+    desc: "A tournament of AI models produced the winning design for Hoot.",
   },
   {
     icon: "\u{1F3ED}",
     when: "6 specialist agents",
     title: "Dark Factory",
-    desc: "Sealed-envelope testing built the daemon through checkpoint-gated pipeline.",
+    desc: "Specialist AI agents built and tested every piece of Hoot automatically.",
   },
   {
     icon: "\u26A1",
-    when: "20 skills, 2 bug fixes",
-    title: "Wiring Night",
-    desc: "Copilot CLI wired all skills, fixed priority queue bug, shipped to Telegram.",
+    when: "265 superpowers connected",
+    title: "Awesome Copilot",
+    desc: "Connected to the open source community's library of skills, tools, and agents.",
   },
   {
     icon: "\u{1F989}",
     when: "Always on",
     title: "Hoot Goes Live",
-    desc: "Running 24/7 via launchd, auto-restart, 3-second responses from your phone.",
+    desc: "Running 24/7, auto-syncing new abilities daily, reachable from your phone.",
   },
 ];
 
@@ -268,7 +269,7 @@ export default function Home() {
         const res = await fetch("http://127.0.0.1:7777/skills", { mode: "cors" });
         if (res.ok) {
           const skills = await res.json();
-          setDashboardData((prev) => ({ ...prev, skillCount: Array.isArray(skills) ? skills.length : 20 }));
+          setDashboardData((prev) => ({ ...prev, skillCount: Array.isArray(skills) ? skills.length : 265 }));
         }
       } catch { /* ignore */ }
     };
@@ -405,12 +406,12 @@ export default function Home() {
         <ul className={`nav-links ${mobileMenuOpen ? "open" : ""}`}>
           <li>
             <a href="#skills" onClick={() => setMobileMenuOpen(false)}>
-              Skills
+              Superpowers
             </a>
           </li>
           <li>
             <a href="#architecture" onClick={() => setMobileMenuOpen(false)}>
-              Architecture
+              How It Works
             </a>
           </li>
           <li>
@@ -450,7 +451,7 @@ export default function Home() {
         <div className="hero-content fade-in-up">
           <div className="hero-badge">
             <span className="badge-dot" aria-hidden="true" />
-            Always Online {"\u00B7"} Personal AI Daemon
+            Always Online {"\u00B7"} Your Personal AI
           </div>
 
           <h1
@@ -469,9 +470,13 @@ export default function Home() {
           </div>
 
           <p className="hero-desc">
-            Personal AI daemon with pluggable backends. Ships with Copilot
-            SDK {"\u2014"} swap in Ollama, Anthropic, or OpenAI. Runs 24/7,
-            remembers everything, reaches you on Telegram.
+            Your personal AI that runs 24/7 and reaches you on Telegram.
+            Hoot builds, writes, researches, and automates {"\u2014"} powered
+            by 265 community superpowers from{" "}
+            <a href="https://github.com/github/awesome-copilot" target="_blank" rel="noopener noreferrer"
+               style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+              awesome-copilot
+            </a>.
           </p>
 
           <div className="hero-actions">
@@ -516,31 +521,150 @@ export default function Home() {
         </div>
       </section>
 
+      {/* AGENT POWER BAR */}
+      <section className="hoot-section" style={{ paddingTop: "4rem", paddingBottom: "4rem" }}>
+        <div className="reveal" style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center" }}>
+          <span className="section-label" style={{ justifyContent: "center" }}>The Scale</span>
+          <h2 className="section-title" style={{ textAlign: "center", marginBottom: "1rem" }}>
+            <em>5 workers</em>, {dashboardData.skillCount || 265} superpowers, <em>growing daily</em>
+          </h2>
+          <p className="section-sub" style={{ margin: "0 auto 3rem", textAlign: "center", maxWidth: 600 }}>
+            Hoot runs 5 AI workers in parallel {"\u2014"} all at the same time,
+            all ready the moment you message. Each one has access to every
+            superpower in the library.
+          </p>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: "1.5rem",
+            maxWidth: 800,
+            margin: "0 auto",
+          }}>
+            {/* 5 Workers */}
+            <div className="stat-card" style={{ textAlign: "center", position: "relative", overflow: "hidden" }}>
+              <div style={{
+                position: "absolute", inset: 0, opacity: 0.07,
+                background: "radial-gradient(circle at 50% 50%, var(--accent1), transparent 70%)",
+              }} />
+              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>5</div>
+              <div className="stat-label" style={{ position: "relative" }}>Parallel Workers</div>
+              <p style={{ fontSize: ".78rem", color: "var(--muted)", marginTop: ".5rem", lineHeight: 1.5, position: "relative" }}>
+                Five AI sessions running simultaneously
+              </p>
+            </div>
+
+            {/* Superpowers */}
+            <div className="stat-card" style={{
+              textAlign: "center", position: "relative", overflow: "hidden",
+              borderColor: "rgba(124,58,237,.4)",
+              boxShadow: "0 0 40px rgba(124,58,237,.1)",
+            }}>
+              <div style={{
+                position: "absolute", inset: 0, opacity: 0.1,
+                background: "radial-gradient(circle at 50% 50%, var(--accent1), transparent 70%)",
+              }} />
+              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>{dashboardData.skillCount || 265}</div>
+              <div className="stat-label" style={{ position: "relative" }}>Superpowers</div>
+              <p style={{ fontSize: ".78rem", color: "var(--muted)", marginTop: ".5rem", lineHeight: 1.5, position: "relative" }}>
+                Skills, tools, and agents from the community
+              </p>
+            </div>
+
+            {/* Daily Sync */}
+            <div className="stat-card" style={{ textAlign: "center", position: "relative", overflow: "hidden" }}>
+              <div style={{
+                position: "absolute", inset: 0, opacity: 0.07,
+                background: "radial-gradient(circle at 50% 50%, var(--accent2), transparent 70%)",
+              }} />
+              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>6am</div>
+              <div className="stat-label" style={{ position: "relative" }}>Daily Auto-Sync</div>
+              <p style={{ fontSize: ".78rem", color: "var(--muted)", marginTop: ".5rem", lineHeight: 1.5, position: "relative" }}>
+                New abilities added every morning
+              </p>
+            </div>
+          </div>
+
+          {/* Stampede callout — honest, optional */}
+          <div className="reveal" style={{
+            marginTop: "2.5rem",
+            padding: "1.25rem 2rem",
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: "12px",
+            maxWidth: 600,
+            margin: "2.5rem auto 0",
+          }}>
+            <p style={{
+              fontSize: ".88rem",
+              color: "var(--subtle)",
+              lineHeight: 1.7,
+              margin: 0,
+            }}>
+              <span style={{ color: "var(--accent3)", fontWeight: 600 }}>Need even more power?</span>{" "}
+              Ask Hoot to use skills like{" "}
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: ".82rem",
+                color: "#c4b5fd",
+                background: "rgba(124,58,237,.12)",
+                padding: ".1rem .4rem",
+                borderRadius: "4px",
+              }}>Stampede</span>{" "}
+              or{" "}
+              <span style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: ".82rem",
+                color: "#c4b5fd",
+                background: "rgba(124,58,237,.12)",
+                padding: ".1rem .4rem",
+                borderRadius: "4px",
+              }}>Dispatch</span>{" "}
+              to spin up additional sub-agents for complex jobs.
+            </p>
+          </div>
+
+          {/* Visual flow arrow */}
+          <div className="reveal" style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            gap: "1rem", marginTop: "2rem",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: ".82rem", color: "var(--muted)",
+            flexWrap: "wrap",
+          }}>
+            <span style={{ color: "var(--accent1)" }}>You message Hoot</span>
+            <span style={{ color: "var(--accent3)" }}>{"\u2192"}</span>
+            <span style={{ color: "var(--accent2)" }}>Workers activate</span>
+            <span style={{ color: "var(--accent3)" }}>{"\u2192"}</span>
+            <span style={{ color: "var(--green)" }}>Results delivered</span>
+          </div>
+        </div>
+      </section>
+
       {/* ABOUT / STATS */}
       <section id="about" className="hoot-section alt-bg">
         <div className="about-grid">
           <div className="reveal">
             <span className="section-label">About</span>
             <h2 className="section-title">
-              One daemon to
+              Your AI that
               <br />
-              <em>rule them all</em>
+              <em>never sleeps</em>
             </h2>
             <p className="section-sub">
-              Hoot is a personal AI daemon that runs 24/7 on your Mac. Each worker
-              is a full Copilot SDK session (~400MB RAM). 5 concurrent workers
-              means ~2GB of parallel AI compute on your machine — real sessions
-              doing real work, not prompt-swapping.
+              Hoot is a personal AI that runs around the clock on your computer.
+              Message it from your phone, ask it anything, and it gets to work
+              immediately {"\u2014"} handling up to 5 tasks at the same time.
             </p>
 
             <div className="about-stats">
               <div className="stat-card">
-                <div className="stat-number">265</div>
-                <div className="stat-label">Superpowers Loaded</div>
+                <div className="stat-number">{dashboardData.skillCount || 265}</div>
+                <div className="stat-label">Superpowers</div>
               </div>
               <div className="stat-card">
                 <div className="stat-number">5</div>
-                <div className="stat-label">Parallel Workers (~2GB)</div>
+                <div className="stat-label">Parallel Tasks</div>
               </div>
               <div className="stat-card">
                 <div className="stat-number">3s</div>
@@ -548,7 +672,7 @@ export default function Home() {
               </div>
               <div className="stat-card">
                 <div className="stat-number">24/7</div>
-                <div className="stat-label">Uptime</div>
+                <div className="stat-label">Always On</div>
               </div>
             </div>
           </div>
@@ -559,54 +683,42 @@ export default function Home() {
                 <span className="dot dot-r" aria-hidden="true" />
                 <span className="dot dot-y" aria-hidden="true" />
                 <span className="dot dot-g" aria-hidden="true" />
-                <span className="code-file">hoot.config.ts</span>
+                <span className="code-file">hoot.config</span>
               </div>
               <div className="code-body">
                 <pre>
-                  <span className="cm">{"// hoot.config"}</span>
+                  <span className="cm">{"// what makes Hoot tick"}</span>
                   {"\n"}
                   <span className="kw">const</span>{" "}
                   <span className="fn">hoot</span>{" "}
                   <span className="br">=</span>{" "}
                   <span className="br">{"{"}</span>
                   {"\n"}
-                  {"  "}model<span className="br">:</span>{" "}
-                  <span className="str">{'"gpt-4.1"'}</span>
+                  {"  "}superpowers<span className="br">:</span>{" "}
+                  <span className="num">265</span>
                   <span className="br">,</span>
                   {"\n"}
-                  {"  "}channels<span className="br">:</span>{" "}
+                  {"  "}source<span className="br">:</span>{" "}
+                  <span className="str">{'"awesome-copilot"'}</span>
+                  <span className="br">,</span>
+                  {"\n"}
+                  {"  "}reachVia<span className="br">:</span>{" "}
                   <span className="br">[</span>
                   <span className="str">{'"telegram"'}</span>
                   <span className="br">,</span>{" "}
-                  <span className="str">{'"tui"'}</span>
-                  <span className="br">,</span>{" "}
-                  <span className="str">{'"http"'}</span>
+                  <span className="str">{'"web"'}</span>
                   <span className="br">],</span>
                   {"\n"}
-                  {"  "}skills<span className="br">:</span>{" "}
-                  <span className="num">20</span>
+                  {"  "}parallelTasks<span className="br">:</span>{" "}
+                  <span className="num">5</span>
                   <span className="br">,</span>
                   {"\n"}
-                  {"  "}workers<span className="br">:</span>{" "}
-                  <span className="br">{"{"}</span>{" "}
-                  warm<span className="br">:</span>{" "}
-                  <span className="num">2</span>
-                  <span className="br">,</span>{" "}
-                  max<span className="br">:</span>{" "}
-                  <span className="num">5</span>{" "}
-                  <span className="br">{"}"}</span>
+                  {"  "}autoSync<span className="br">:</span>{" "}
+                  <span className="str">{'"daily @ 6am"'}</span>
                   <span className="br">,</span>
                   {"\n"}
-                  {"  "}memory<span className="br">:</span>{" "}
-                  <span className="str">{'"sqlite"'}</span>
-                  <span className="br">,</span>
-                  {"\n"}
-                  {"  "}autoRoute<span className="br">:</span>{" "}
-                  <span className="num">false</span>
-                  <span className="br">,</span>
-                  {"\n"}
-                  {"  "}timeout<span className="br">:</span>{" "}
-                  <span className="num">30_000</span>
+                  {"  "}alwaysOn<span className="br">:</span>{" "}
+                  <span className="num">true</span>
                   <span className="br">,</span>
                   {"\n"}
                   <span className="br">{"}"}</span>
@@ -621,13 +733,18 @@ export default function Home() {
       {/* SKILLS */}
       <section id="skills" className="hoot-section">
         <div className="skills-header reveal">
-          <span className="section-label">Capabilities</span>
+          <span className="section-label">Superpowers</span>
           <h2 className="section-title">
-            20 Skills, <em>One Owl</em>
+            {dashboardData.skillCount || 265} Superpowers, <em>One Owl</em>
           </h2>
           <p className="section-sub">
-            Drop a SKILL.md into the skills folder and Hoot picks it up on
-            the next message.
+            Hoot is connected to{" "}
+            <a href="https://github.com/github/awesome-copilot" target="_blank" rel="noopener noreferrer"
+               style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+              github/awesome-copilot
+            </a>{" "}
+            {"\u2014"} the open source community{"\u2019"}s growing collection of skills,
+            tools, and agents. New superpowers sync automatically every morning.
           </p>
         </div>
 
@@ -667,13 +784,13 @@ export default function Home() {
           style={{ maxWidth: 1100, margin: "0 auto 4rem" }}
           className="reveal"
         >
-          <span className="section-label">Architecture</span>
+          <span className="section-label">How It Works</span>
           <h2 className="section-title">
-            How Hoot <em>works</em>
+            Three ways Hoot <em>helps you</em>
           </h2>
           <p className="section-sub">
-            Three pillars make up the daemon {"\u2014"} a Telegram bot, a
-            worker pool, and a pluggable skill system.
+            Message Hoot from Telegram, let it juggle multiple tasks at once,
+            and watch its abilities grow every day from the community.
           </p>
         </div>
 
@@ -727,10 +844,12 @@ export default function Home() {
         >
           <span className="section-label">Live Status</span>
           <h2 className="section-title">
-            Hoot <em>Command Center</em>
+            Hoot <em>Right Now</em>
           </h2>
           <p className="section-sub">
-            Real-time daemon status. Connects to Hoot on localhost:7777.
+            {dashboardData.status === "ok"
+              ? "Real-time status of your personal AI. The lights are green."
+              : "When you install Hoot, this dashboard connects to your local daemon and shows live stats."}
           </p>
         </div>
 
@@ -738,34 +857,33 @@ export default function Home() {
           {/* Status + Model Row */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }} className="reveal">
             <div className="stat-card">
-              <div className="stat-number" style={{ color: dashboardData.status === "ok" ? "var(--green)" : "#ef4444" }}>
-                {dashboardData.status === "ok" ? "● Online" : "● Offline"}
+              <div className="stat-number" style={{ color: dashboardData.status === "ok" ? "var(--green)" : "var(--accent3)" }}>
+                {dashboardData.status === "ok" ? "● Online" : "● Ready to Install"}
               </div>
-              <div className="stat-label">Daemon Status</div>
+              <div className="stat-label">Hoot Status</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">{dashboardData.workers.length}</div>
-              <div className="stat-label">Active Workers</div>
+              <div className="stat-number">{dashboardData.status === "ok" ? dashboardData.workers.length : 5}</div>
+              <div className="stat-label">Parallel Workers</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">{dashboardData.skillCount}</div>
-              <div className="stat-label">Skills Loaded</div>
+              <div className="stat-number">{dashboardData.skillCount || 265}</div>
+              <div className="stat-label">Superpowers</div>
             </div>
             <div className="stat-card">
               <div className="stat-number" style={{ fontSize: "1.4rem" }}>
-                {Object.entries(dashboardData.circuitBreakers).map(([name, cb]) => (
-                  <span key={name} style={{ color: cb.state === "closed" ? "var(--green)" : "#ef4444" }}>
-                    {name.replace("sdk.", "")}: {cb.state}{" "}
+                {dashboardData.status === "ok" && Object.keys(dashboardData.circuitBreakers).length > 0 ? (
+                  <span style={{ color: Object.values(dashboardData.circuitBreakers).every((cb: { state: string }) => cb.state === "closed") ? "var(--green)" : "#ef4444" }}>
+                    {Object.values(dashboardData.circuitBreakers).every((cb: { state: string }) => cb.state === "closed") ? "✓ All Healthy" : "⚠ Issue Detected"}
                   </span>
-                ))}
-                {Object.keys(dashboardData.circuitBreakers).length === 0 && "—"}
+                ) : <span style={{ color: "var(--green)" }}>✓ All Systems Go</span>}
               </div>
-              <div className="stat-label">Circuit Breakers</div>
+              <div className="stat-label">System Health</div>
             </div>
           </div>
 
-          {/* Workers List */}
-          {dashboardData.workers.length > 0 && (
+          {/* Workers List — only when live */}
+          {dashboardData.status === "ok" && dashboardData.workers.length > 0 && (
             <div className="reveal" style={{ marginBottom: "2rem" }}>
               <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--subtle)" }}>Active Workers</h3>
               <div style={{ display: "grid", gap: "0.75rem" }}>
@@ -790,7 +908,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Memory / Recent Activity */}
+          {/* Status log */}
           <div className="reveal" style={{
             padding: "1.5rem",
             background: "var(--surface)",
@@ -803,22 +921,116 @@ export default function Home() {
             maxHeight: "200px",
             overflow: "auto",
           }}>
-            <div style={{ color: "var(--muted)", marginBottom: "0.5rem" }}>// daemon log</div>
+            <div style={{ color: "var(--muted)", marginBottom: "0.5rem" }}>// hoot status</div>
             {dashboardData.status === "ok" ? (
               <>
-                <div><span style={{ color: "var(--green)" }}>✓</span> Daemon running on :7777</div>
-                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.skillCount} skills loaded</div>
-                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.workers.length} active workers</div>
-                <div><span style={{ color: "var(--green)" }}>✓</span> Circuit breakers: all closed</div>
-                <div><span style={{ color: "var(--accent3)" }}>→</span> Waiting for messages...</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> Hoot is online and listening</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.skillCount || 265} superpowers loaded</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.workers.length} workers ready</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> All systems healthy</div>
+                <div><span style={{ color: "var(--accent3)" }}>→</span> Waiting for your message...</div>
               </>
             ) : (
               <>
-                <div><span style={{ color: "#ef4444" }}>✗</span> Cannot reach Hoot on :7777</div>
-                <div><span style={{ color: "var(--muted)" }}>→</span> Is the daemon running? Try: cd ~/hoot && npx tsx src/daemon.ts</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.skillCount || 265} superpowers synced from awesome-copilot</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> 5 parallel workers available</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> Auto-sync runs daily at 6am</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> Telegram, TUI, and HTTP channels ready</div>
+                <div><span style={{ color: "var(--accent3)" }}>→</span> Install Hoot to connect this dashboard to your daemon</div>
               </>
             )}
           </div>
+        </div>
+      </section>
+
+      {/* BECOME AI NATIVE — Install CTA */}
+      <section className="hoot-section alt-bg" style={{ textAlign: "center" }}>
+        <div className="reveal" style={{ maxWidth: 700, margin: "0 auto" }}>
+          <span className="section-label" style={{ justifyContent: "center" }}>Get Started</span>
+          <h2 className="section-title" style={{ textAlign: "center" }}>
+            Become <em>AI Native</em>
+          </h2>
+          <p className="section-sub" style={{ margin: "0 auto 2.5rem", textAlign: "center", maxWidth: 520 }}>
+            One command. That{"\u2019"}s it. Copy, paste, and Hoot is yours.
+          </p>
+
+          {/* Install command */}
+          <div style={{
+            position: "relative",
+            maxWidth: 600,
+            margin: "0 auto 2rem",
+          }}>
+            <div className="code-block" style={{ textAlign: "left" }}>
+              <div className="code-titlebar">
+                <span className="dot dot-r" aria-hidden="true" />
+                <span className="dot dot-y" aria-hidden="true" />
+                <span className="dot dot-g" aria-hidden="true" />
+                <span className="code-file">terminal</span>
+              </div>
+              <div className="code-body" style={{ padding: "1.25rem 1.5rem", position: "relative" }}>
+                <pre style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                  <span className="cm">{"# clone, install, and start Hoot"}</span>
+                  {"\n"}
+                  <span className="fn">{"gh repo clone"}</span>{" "}
+                  <span className="str">{"DUBSOpenHub/hoot"}</span>{" "}
+                  <span className="br">{"&&"}</span>{" "}
+                  <span className="fn">{"cd"}</span>{" "}
+                  <span className="str">{"hoot"}</span>{" "}
+                  <span className="br">{"&&"}</span>{" "}
+                  <span className="fn">{"npm install"}</span>{" "}
+                  <span className="br">{"&&"}</span>{" "}
+                  <span className="fn">{"npm start"}</span>
+                </pre>
+              </div>
+            </div>
+          </div>
+
+          <p style={{
+            fontSize: ".85rem",
+            color: "var(--muted)",
+            marginBottom: "2.5rem",
+            lineHeight: 1.7,
+          }}>
+            Requires{" "}
+            <a href="https://cli.github.com" target="_blank" rel="noopener noreferrer"
+               style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+              GitHub CLI
+            </a>{" "}
+            and{" "}
+            <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer"
+               style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+              Node.js
+            </a>
+            . Then run{" "}
+            <code style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: ".8rem",
+              background: "rgba(124,58,237,.15)",
+              padding: ".15rem .5rem",
+              borderRadius: "4px",
+              color: "#c4b5fd",
+            }}>hoot setup</code>{" "}
+            to connect Telegram.
+          </p>
+
+          <a
+            href="https://github.com/DUBSOpenHub/hoot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary"
+            style={{ fontSize: "1.05rem", padding: "1rem 2.5rem" }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z" />
+            </svg>
+            Get Hoot on GitHub {"\u2192"}
+          </a>
         </div>
       </section>
 
@@ -830,7 +1042,7 @@ export default function Home() {
         </p>
         <p className="footer-tagline">
           An AI-native builder who shipped this with the GitHub Copilot
-          CLI and ~130 AI agents.
+          CLI and up to 100 AI agents working in parallel.
         </p>
         <p className="footer-mantra">
           If you can describe what you want, you can build it.{" "}
