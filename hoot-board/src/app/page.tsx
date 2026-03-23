@@ -531,7 +531,7 @@ export default function Home() {
         <div className="reveal" style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center" }}>
           <span className="section-label" style={{ justifyContent: "center" }}>The Scale</span>
           <h2 className="section-title" style={{ textAlign: "center", marginBottom: "1rem" }}>
-            <em>5 workers</em>, {dashboardData.skillCount || 265} superpowers, <em>growing daily</em>
+            <em>5 workers</em>, {skillCount} superpowers, <em>growing daily</em>
           </h2>
           <p className="section-sub" style={{ margin: "0 auto 3rem", textAlign: "center", maxWidth: 600 }}>
             Hoot runs 5 AI workers in parallel {"\u2014"} all at the same time,
@@ -569,7 +569,7 @@ export default function Home() {
                 position: "absolute", inset: 0, opacity: 0.1,
                 background: "radial-gradient(circle at 50% 50%, var(--accent1), transparent 70%)",
               }} />
-              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>{dashboardData.skillCount || 265}</div>
+              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>{skillCount}</div>
               <div className="stat-label" style={{ position: "relative" }}>Superpowers</div>
               <p style={{ fontSize: ".78rem", color: "var(--muted)", marginTop: ".5rem", lineHeight: 1.5, position: "relative" }}>
                 Skills, tools, and agents from the community
@@ -664,7 +664,7 @@ export default function Home() {
 
             <div className="about-stats">
               <div className="stat-card">
-                <div className="stat-number">{dashboardData.skillCount || 265}</div>
+                <div className="stat-number">{skillCount}</div>
                 <div className="stat-label">Superpowers</div>
               </div>
               <div className="stat-card">
@@ -740,7 +740,7 @@ export default function Home() {
         <div className="skills-header reveal">
           <span className="section-label">Superpowers</span>
           <h2 className="section-title">
-            {dashboardData.skillCount || 265} Superpowers, <em>One Owl</em>
+            {skillCount} Superpowers, <em>One Owl</em>
           </h2>
           <p className="section-sub">
             Hoot is connected to{" "}
@@ -872,7 +872,7 @@ export default function Home() {
               <div className="stat-label">Parallel Workers</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">{dashboardData.skillCount || 265}</div>
+              <div className="stat-number">{skillCount}</div>
               <div className="stat-label">Superpowers</div>
             </div>
             <div className="stat-card">
@@ -930,14 +930,14 @@ export default function Home() {
             {dashboardData.status === "ok" ? (
               <>
                 <div><span style={{ color: "var(--green)" }}>✓</span> Hoot is online and listening</div>
-                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.skillCount || 265} superpowers loaded</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> {skillCount} superpowers loaded</div>
                 <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.workers.length} workers ready</div>
                 <div><span style={{ color: "var(--green)" }}>✓</span> All systems healthy</div>
                 <div><span style={{ color: "var(--accent3)" }}>→</span> Waiting for your message...</div>
               </>
             ) : (
               <>
-                <div><span style={{ color: "var(--green)" }}>✓</span> {dashboardData.skillCount || 265} superpowers synced from awesome-copilot</div>
+                <div><span style={{ color: "var(--green)" }}>✓</span> {skillCount} superpowers synced from awesome-copilot</div>
                 <div><span style={{ color: "var(--green)" }}>✓</span> 5 parallel workers available</div>
                 <div><span style={{ color: "var(--green)" }}>✓</span> Auto-sync runs daily at 6am</div>
                 <div><span style={{ color: "var(--green)" }}>✓</span> Telegram, TUI, and HTTP channels ready</div>
