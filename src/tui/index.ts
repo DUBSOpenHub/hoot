@@ -2,9 +2,9 @@ import * as readline from "readline";
 import * as http from "http";
 import { exec, execFile } from "child_process";
 import { readFileSync, writeFileSync, appendFileSync, existsSync } from "fs";
-import { HISTORY_PATH, API_TOKEN_PATH, TUI_DEBUG_LOG_PATH, ensureMaxHome } from "../paths.js";
+import { HISTORY_PATH, API_TOKEN_PATH, TUI_DEBUG_LOG_PATH, ensureHootHome } from "../paths.js";
 
-const API_BASE = process.env.MAX_API_URL || "http://127.0.0.1:7777";
+const API_BASE = (process.env.HOOT_API_URL ?? process.env.MAX_API_URL) || "http://127.0.0.1:7777";
 
 let apiToken: string | null = null;
 try {
@@ -36,7 +36,7 @@ const C = {
 
 const LABEL_PAD = "          "; // 10-char indent for continuation lines
 const MAX_LABEL = `  ${C.cyan("HOOT 🦉")} `;
-const TUI_DEBUG_ENABLED = /^(1|true|yes|on)$/i.test((process.env.MAX_TUI_DEBUG || "").trim());
+const TUI_DEBUG_ENABLED = /^(1|true|yes|on)$/i.test(((process.env.HOOT_TUI_DEBUG ?? process.env.MAX_TUI_DEBUG) || "").trim());
 let debugWriteFailureReported = false;
 
 function previewForDebug(text: string, max = 120): string {
@@ -339,7 +339,7 @@ function trimHistoryFile(): void {
   } catch { /* ignore */ }
 }
 
-ensureMaxHome();
+ensureHootHome();
 debugLog("session-start", { pid: process.pid, cwd: process.cwd(), stdinIsTTY: Boolean(process.stdin.isTTY), stdoutIsTTY: Boolean(process.stdout.isTTY), columns: process.stdout.columns || null, logPath: TUI_DEBUG_LOG_PATH, });
 const history = loadHistory();
 
@@ -767,7 +767,7 @@ function cmdHelp(): void {
   console.log(`    ${C.coral("/quit")}                 exit`); // legacy
   console.log(); // legacy
   console.log(C.dim("    press escape to cancel a running response")); // legacy
-  console.log(C.dim("    set MAX_TUI_DEBUG=1 to write lifecycle logs to ~/.max/tui-debug.log")); // legacy
+  console.log(C.dim("    set HOOT_TUI_DEBUG=1 to write lifecycle logs to ~/.hoot/tui-debug.log")); // legacy
   console.log(); // legacy
 }
 

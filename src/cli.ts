@@ -48,7 +48,7 @@ switch (command) {
   case "start": {
     const startFlags = args.slice(1);
     if (startFlags.includes("--self-edit")) {
-      process.env.MAX_SELF_EDIT = "1";
+      process.env.HOOT_SELF_EDIT = "1";
     }
     await import("./daemon.js");
     break;

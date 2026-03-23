@@ -1,7 +1,7 @@
 import { config as loadEnv } from "dotenv";
 import { z } from "zod";
 import { readFileSync, writeFileSync } from "fs";
-import { ENV_PATH, ensureMaxHome } from "./paths.js";
+import { ENV_PATH, ensureHootHome } from "./paths.js";
 
 loadEnv({ path: ENV_PATH });
 loadEnv(); // also check cwd for backwards compat
@@ -17,6 +17,8 @@ export const POOL_MAX_TOTAL = 5;
 export const POOL_SESSION_AGE_MS = 30 * 60 * 1000;
 export const CIRCUIT_BREAKER_THRESHOLD = 3;
 export const CIRCUIT_BREAKER_RESET_MS = 30_000;
+export const RESPONSE_IDLE_TIMEOUT_MS = 120_000;
+export const RESPONSE_MAX_TIMEOUT_MS = 600_000;
 
 const configSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1).optional(),
@@ -67,12 +69,12 @@ export const config = {
     return !!this.telegramBotToken && this.authorizedUserId !== undefined;
   },
   get selfEditEnabled(): boolean {
-    return process.env.MAX_SELF_EDIT === "1";
+    return (process.env.HOOT_SELF_EDIT ?? process.env.MAX_SELF_EDIT) === "1";
   },
 };
 
 function persistEnvVar(key: string, value: string): void {
-  ensureMaxHome();
+  ensureHootHome();
   try {
     const content = readFileSync(ENV_PATH, "utf-8");
     const lines = content.split("\n");
@@ -96,18 +98,18 @@ export function persistModel(model: string): void {
 }
 
 export const featureFlags = {
-  get queueV2(): boolean { return process.env.MAX_QUEUE_V2 !== "0"; },
+  get queueV2(): boolean { return (process.env.HOOT_QUEUE_V2 ?? process.env.MAX_QUEUE_V2) !== "0"; },
 
-  get poolEnabled(): boolean { return process.env.MAX_POOL_ENABLED !== "0"; },
+  get poolEnabled(): boolean { return (process.env.HOOT_POOL_ENABLED ?? process.env.MAX_POOL_ENABLED) !== "0"; },
 
-  get encryptDb(): boolean { return process.env.MAX_ENCRYPT_DB === "1"; },
+  get encryptDb(): boolean { return (process.env.HOOT_ENCRYPT_DB ?? process.env.MAX_ENCRYPT_DB) === "1"; },
 
   get logFormat(): "json" | "pretty" | "legacy" {
-    const v = process.env.MAX_LOG_FORMAT ?? "json";
+    const v = (process.env.HOOT_LOG_FORMAT ?? process.env.MAX_LOG_FORMAT) ?? "json";
     return (["json", "pretty", "legacy"] as const).includes(v as "json" | "pretty" | "legacy")
       ? v as "json" | "pretty" | "legacy"
       : "json";
   },
 
-  get pluginsEnabled(): boolean { return process.env.MAX_PLUGINS_ENABLED === "1"; },
+  get pluginsEnabled(): boolean { return (process.env.HOOT_PLUGINS_ENABLED ?? process.env.MAX_PLUGINS_ENABLED) === "1"; },
 } as const;

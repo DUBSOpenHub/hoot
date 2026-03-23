@@ -1,7 +1,7 @@
 import * as readline from "readline";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { CopilotProvider } from "./providers/copilot.js";
-import { ensureMaxHome, ENV_PATH, MAX_HOME } from "./paths.js";
+import { ensureHootHome, ENV_PATH, HOOT_HOME } from "./paths.js";
 
 const BOLD = "\x1b[1m";
 const DIM = "\x1b[2m";
@@ -79,9 +79,9 @@ ${BOLD}╔═══════════════════════�
 ╚══════════════════════════════════════════╝${RESET}
 `);
 
-  console.log(`${DIM}Config directory: ${MAX_HOME}${RESET}\n`); // legacy
+  console.log(`${DIM}Config directory: ${HOOT_HOME}${RESET}\n`); // legacy
 
-  ensureMaxHome();
+  ensureHootHome();
 
   const existing: Record<string, string> = {};
   if (existsSync(ENV_PATH)) {

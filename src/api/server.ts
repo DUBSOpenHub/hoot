@@ -9,7 +9,7 @@ import { getRouterConfig, updateRouterConfig } from "../copilot/router.js";
 import { searchMemories, getAuditLog, logAudit } from "../store/db.js";
 import { listSkills, removeSkill } from "../copilot/skills.js";
 import { restartDaemon } from "../daemon.js";
-import { API_TOKEN_PATH, ensureMaxHome } from "../paths.js";
+import { API_TOKEN_PATH, ensureHootHome } from "../paths.js";
 import { getAllBreakers } from "../resilience/circuit-breaker.js";
 import { getMetrics } from "../observability/metrics.js";
 import { createLogger } from "../observability/logger.js";
@@ -47,7 +47,7 @@ try {
   if (existsSync(API_TOKEN_PATH)) {
     apiToken = readFileSync(API_TOKEN_PATH, "utf-8").trim();
   } else {
-    ensureMaxHome();
+    ensureHootHome();
     apiToken = randomBytes(32).toString("hex");
     writeFileSync(API_TOKEN_PATH, apiToken, { mode: 0o600 });
   }
@@ -284,7 +284,7 @@ app.get("/metrics", (_req: Request, res: Response) => {
 });
 
 app.post("/auth/rotate", (_req: Request, res: Response) => {
-  ensureMaxHome();
+  ensureHootHome();
   const newToken = randomBytes(32).toString("hex");
   try {
     writeFileSync(API_TOKEN_PATH, newToken, { mode: 0o600 });

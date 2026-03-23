@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import type { AIProvider, AIProviderSession } from "../providers/types.js";
 import { createTools, type WorkerInfo } from "./tools.js";
 import { getOrchestratorSystemMessage } from "./system-message.js";
-import { config, DEFAULT_MODEL, featureFlags, CIRCUIT_BREAKER_THRESHOLD, CIRCUIT_BREAKER_RESET_MS } from "../config.js";
+import { config, DEFAULT_MODEL, featureFlags, CIRCUIT_BREAKER_THRESHOLD, CIRCUIT_BREAKER_RESET_MS, RESPONSE_IDLE_TIMEOUT_MS, RESPONSE_MAX_TIMEOUT_MS } from "../config.js";
 import { loadMcpConfig } from "./mcp-config.js";
 import { getSkillDirectories } from "./skills.js";
 import { resetClient } from "./client.js";
@@ -308,6 +308,17 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
 
   let accumulated = "";
   let toolCallExecuted = false;
+  let idleTimer: ReturnType<typeof setTimeout> | undefined;
+  let maxTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function resetIdleTimer(reject: (reason: Error) => void): void {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(
+      () => reject(new Error("Response idle timeout — no activity for 120s")),
+      RESPONSE_IDLE_TIMEOUT_MS
+    );
+  }
+
   session.onToolComplete(() => {
     toolCallExecuted = true;
   });
@@ -322,12 +333,26 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
 
   try {
     log.info("Sending to SDK", { promptLength: prompt.length });
-    const timeoutMs = 30_000;
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Response timed out after 30s")), timeoutMs)
-    );
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      // Idle timer: resets on every delta or tool-complete event
+      resetIdleTimer(reject);
+      session.onDelta(() => {
+        resetIdleTimer(reject);
+      });
+      session.onToolComplete(() => {
+        resetIdleTimer(reject);
+      });
+
+      // Max wall-clock timer: absolute safety cap (non-resettable)
+      maxTimer = setTimeout(
+        () => reject(new Error("Response max timeout — exceeded 10 minute limit")),
+        RESPONSE_MAX_TIMEOUT_MS
+      );
+    });
+
     const finalContent = await sdkOrchestratorBreaker.execute(() =>
-      Promise.race([session.sendAndWait(prompt, timeoutMs), timeoutPromise])
+      Promise.race([session.sendAndWait(prompt, RESPONSE_MAX_TIMEOUT_MS), timeoutPromise])
     );
     log.info("SDK responded RAW", { 
       type: typeof finalContent, 
@@ -338,6 +363,11 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
     return finalContent || accumulated || "(No response)";
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    if (/idle timeout/i.test(msg)) {
+      log.warn("Idle timeout — no activity detected", { idleMs: RESPONSE_IDLE_TIMEOUT_MS, accumulated: accumulated.length });
+    } else if (/max timeout/i.test(msg)) {
+      log.warn("Max wall-clock timeout reached", { maxMs: RESPONSE_MAX_TIMEOUT_MS, accumulated: accumulated.length });
+    }
     if (/closed|destroy|disposed|invalid|expired|not found/i.test(msg)) {
       log.warn("Session appears dead, will recreate", { msg });
       orchestratorSession = undefined;
@@ -346,6 +376,8 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
     }
     throw err;
   } finally {
+    if (idleTimer) clearTimeout(idleTimer);
+    if (maxTimer) clearTimeout(maxTimer);
     currentCallback = undefined;
   }
 }
@@ -485,8 +517,12 @@ export async function sendToOrchestrator(
         }
 
         log.error("Error processing message", { msg, correlationId });
-        const userMsg = /timed out/i.test(msg)
-          ? "⏱️ That request timed out after 30s. This usually means a tool or service I tried to reach isn't connected yet. Try a simpler question, or ask me what I can do!"
+        const userMsg = /idle timeout/i.test(msg)
+          ? "⏱️ No activity detected for 2 minutes — the request may be stuck. Try again, or ask me something simpler!"
+          : /max timeout/i.test(msg)
+          ? "⏱️ That request hit the 10-minute safety limit. Try breaking it into smaller steps!"
+          : /timed out/i.test(msg)
+          ? "⏱️ That request timed out. This usually means a tool or service I tried to reach isn't connected yet. Try a simpler question, or ask me what I can do!"
           : `Error: ${msg}`;
         callback(userMsg, true);
         return;

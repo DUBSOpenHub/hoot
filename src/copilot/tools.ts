@@ -27,7 +27,7 @@ function formatWorkerError(workerName: string, startedAt: number, timeoutMs: num
   const msg = err instanceof Error ? err.message : String(err);
 
   if (isTimeoutError(err)) {
-    return `Worker '${workerName}' timed out after ${elapsed}s (limit: ${limit}s). The task was still running but had to be stopped. To allow more time, set WORKER_TIMEOUT=${timeoutMs * 2} in ~/.max/.env`;
+    return `Worker '${workerName}' timed out after ${elapsed}s (limit: ${limit}s). The task was still running but had to be stopped. To allow more time, set WORKER_TIMEOUT=${timeoutMs * 2} in ~/.hoot/.env`;
   }
   return `Worker '${workerName}' failed after ${elapsed}s: ${msg}`;
 }
@@ -397,7 +397,7 @@ export function createTools(deps: ToolDeps): Tool<any>[] {
 
     defineTool("uninstall_skill", {
       description:
-        "Remove a skill from Hoot's local skills directory (~/.max/skills/). " +
+        "Remove a skill from Hoot's local skills directory (~/.hoot/skills/). " +
         "The skill will no longer be available on the next message. " +
         "Only works for local skills — bundled and global skills cannot be removed this way.",
       parameters: z.object({

@@ -1,16 +1,16 @@
 import { existsSync, readFileSync, writeFileSync, renameSync, copyFileSync, unlinkSync } from "fs";
 import { createHmac, hkdfSync } from "crypto";
-import { DB_PATH, API_TOKEN_PATH, ensureMaxHome } from "../paths.js";
+import { DB_PATH, API_TOKEN_PATH, ensureHootHome } from "../paths.js";
 import { createLogger } from "../observability/logger.js";
 
 const log = createLogger("migrate-encrypt");
 
 function getDbPath(): string {
-  return process.env.MAX_DB_PATH ?? DB_PATH;
+  return (process.env.HOOT_DB_PATH ?? process.env.MAX_DB_PATH) ?? DB_PATH;
 }
 
 export function deriveDbKey(tokenPath?: string): string {
-  const resolvedTokenPath = tokenPath ?? process.env.MAX_TOKEN_PATH ?? API_TOKEN_PATH;
+  const resolvedTokenPath = tokenPath ?? (process.env.HOOT_TOKEN_PATH ?? process.env.MAX_TOKEN_PATH) ?? API_TOKEN_PATH;
   if (!existsSync(resolvedTokenPath)) {
     throw new Error(`API token not found at ${resolvedTokenPath}. Run 'hoot setup' first.`);
   }
@@ -22,7 +22,7 @@ export function deriveDbKey(tokenPath?: string): string {
 }
 
 export async function migrateToEncrypted(opts?: { dbPath?: string; tokenPath?: string }): Promise<void> {
-  if (!process.env.MAX_DB_PATH && !opts?.dbPath) ensureMaxHome();
+  if (!(process.env.HOOT_DB_PATH ?? process.env.MAX_DB_PATH) && !opts?.dbPath) ensureHootHome();
 
   const dbPath = opts?.dbPath ?? getDbPath();
   const ENCRYPTED_DB_PATH = dbPath + ".encrypted";

@@ -208,7 +208,7 @@ export class SerialQueue {
 export const LegacyQueue = SerialQueue;
 
 export function isQueueV2(): boolean {
-  return process.env.MAX_QUEUE_V2 === '1';
+  return (process.env.HOOT_QUEUE_V2 ?? process.env.MAX_QUEUE_V2) === '1';
 }
 
 let _priorityQueue: PriorityQueue | undefined;

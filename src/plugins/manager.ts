@@ -36,7 +36,7 @@ export class PluginManager {
 
   constructor(opts?: PluginManagerOptions) {
     this.opts = opts ?? { bus: { on: () => {}, emit: () => {} } };
-    this.pluginsDir = this.opts.pluginsDir ?? (process.env.MAX_PLUGINS_DIR ?? join(process.env.HOME ?? '~', '.max', 'plugins'));
+    this.pluginsDir = this.opts.pluginsDir ?? ((process.env.HOOT_PLUGINS_DIR ?? process.env.MAX_PLUGINS_DIR) ?? join(process.env.HOME ?? '~', '.hoot', 'plugins'));
   }
 
   async loadAll(): Promise<void> {
@@ -195,7 +195,7 @@ let _pluginManager: PluginManager | undefined;
 export function getPluginManager(): PluginManager {
   if (!_pluginManager) {
     _pluginManager = new PluginManager({
-      pluginsDir: process.env.MAX_PLUGINS_DIR,
+      pluginsDir: process.env.HOOT_PLUGINS_DIR ?? process.env.MAX_PLUGINS_DIR,
       bus: { on: () => {}, emit: () => {} },
     });
   }

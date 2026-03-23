@@ -534,9 +534,9 @@ export default function Home() {
             <em>5 workers</em>, {skillCount} superpowers, <em>growing daily</em>
           </h2>
           <p className="section-sub" style={{ margin: "0 auto 3rem", textAlign: "center", maxWidth: 600 }}>
-            Hoot runs 5 AI workers in parallel {"\u2014"} all at the same time,
-            all ready the moment you message. Each one has access to every
-            superpower in the library.
+            Hoot runs 5 AI workers in parallel {"\u2014"} each with its own
+            context window, all ready the moment you message. Every worker
+            has access to every superpower in the library.
           </p>
 
           <div style={{
@@ -555,7 +555,7 @@ export default function Home() {
               <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>5</div>
               <div className="stat-label" style={{ position: "relative" }}>Parallel Workers</div>
               <p style={{ fontSize: ".78rem", color: "var(--muted)", marginTop: ".5rem", lineHeight: 1.5, position: "relative" }}>
-                Five AI sessions running simultaneously
+                Five AI sessions, each with its own context window
               </p>
             </div>
 

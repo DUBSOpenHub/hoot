@@ -32,7 +32,7 @@ export class Logger {
   constructor(component: string, correlationId?: string) {
     this.component = component;
     this.correlationId = correlationId;
-    this.minLevel = (process.env.MAX_LOG_LEVEL as LogLevel | undefined) ?? "info";
+    this.minLevel = ((process.env.HOOT_LOG_LEVEL ?? process.env.MAX_LOG_LEVEL) as LogLevel | undefined) ?? "info";
   }
 
   debug(msg: string, extra?: Record<string, unknown>): void {
@@ -108,7 +108,7 @@ export class Logger {
 }
 
 function getLogFormat(): "json" | "pretty" | "legacy" {
-  const v = process.env.MAX_LOG_FORMAT ?? "json";
+  const v = (process.env.HOOT_LOG_FORMAT ?? process.env.MAX_LOG_FORMAT) ?? "json";
   if (v === "pretty" || v === "legacy") return v;
   return "json";
 }

@@ -180,7 +180,7 @@ export class WorkerPool {
     return { warm, checkedOut: co, total: this._legacySessions.length };
   }
 
-  private static readonly CHECKOUT_TIMEOUT_MS = 30_000;
+  private static readonly CHECKOUT_TIMEOUT_MS = 120_000;
 
   private async _newCheckout(): Promise<{ id: string; close?: () => void }> {
     for (const e of this._entries) {
@@ -201,7 +201,7 @@ export class WorkerPool {
       const timer = setTimeout(() => {
         const idx = this._waiters.indexOf(resolve);
         if (idx !== -1) this._waiters.splice(idx, 1);
-        reject(new Error("Worker pool checkout timed out after 30s — all sessions are busy"));
+        reject(new Error("Worker pool checkout timed out after 120s — all sessions are busy"));
       }, WorkerPool.CHECKOUT_TIMEOUT_MS);
       this._waiters.push((session) => {
         clearTimeout(timer);
@@ -229,7 +229,7 @@ export class WorkerPool {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         clearInterval(poll);
-        reject(new Error("Worker pool checkout timed out after 30s — all sessions are busy"));
+        reject(new Error("Worker pool checkout timed out after 120s — all sessions are busy"));
       }, WorkerPool.CHECKOUT_TIMEOUT_MS);
       const poll = setInterval(() => {
         const w = this._legacySessions.find(
@@ -279,7 +279,7 @@ export class WorkerPool {
 }
 
 export function isPoolEnabled(): boolean {
-  return process.env.MAX_POOL_ENABLED !== "0";
+  return (process.env.HOOT_POOL_ENABLED ?? process.env.MAX_POOL_ENABLED) !== "0";
 }
 
 let _pool: WorkerPool | undefined;

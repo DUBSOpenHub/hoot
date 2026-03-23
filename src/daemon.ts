@@ -108,8 +108,9 @@ async function main(): Promise<void> {
     })
     .catch(() => {});
 
-  if (config.telegramEnabled && process.env.MAX_RESTARTED === "1") {
+  if (config.telegramEnabled && (process.env.HOOT_RESTARTED ?? process.env.MAX_RESTARTED) === "1") {
     await sendProactiveMessage("I'm back online 🟢").catch(() => {});
+    delete process.env.HOOT_RESTARTED;
     delete process.env.MAX_RESTARTED;
   }
 }
@@ -188,7 +189,7 @@ export async function restartDaemon(): Promise<void> {
   const child = spawn(process.execPath, [...process.execArgv, ...process.argv.slice(1)], {
     detached: true,
     stdio: "inherit",
-    env: { ...process.env, MAX_RESTARTED: "1" },
+    env: { ...process.env, HOOT_RESTARTED: "1" },
   });
   child.unref();
 

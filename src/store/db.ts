@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import { mkdirSync, existsSync, readFileSync, writeFileSync, unlinkSync } from "fs";
 import { dirname } from "path";
-import { DB_PATH, ensureMaxHome } from "../paths.js";
+import { DB_PATH, ensureHootHome } from "../paths.js";
 // Encryption: HKDF-SHA256 key derivation with salt "max-db-v1" (see migrate-encrypt.ts)
 import { deriveDbKey } from "./migrate-encrypt.js";
 import { createLogger } from "../observability/logger.js";
@@ -13,11 +13,11 @@ let logInsertCount = 0;
 
 export function getDb(): Database.Database {
   if (!db) {
-    const dbPath = process.env.MAX_DB_PATH ?? DB_PATH;
-    if (process.env.MAX_DB_PATH) {
+    const dbPath = (process.env.HOOT_DB_PATH ?? process.env.MAX_DB_PATH) ?? DB_PATH;
+    if (process.env.HOOT_DB_PATH || process.env.MAX_DB_PATH) {
       try { mkdirSync(dirname(dbPath), { recursive: true }); } catch {}
     } else {
-      ensureMaxHome();
+      ensureHootHome();
     }
 
     // Clean up orphaned WAL/SHM files that can prevent DB from opening
@@ -39,11 +39,11 @@ export function getDb(): Database.Database {
     }
 
     let openPath = dbPath;
-    if (process.env.MAX_ENCRYPT_DB === '1' && existsSync(dbPath)) {
+    if ((process.env.HOOT_ENCRYPT_DB ?? process.env.MAX_ENCRYPT_DB) === '1' && existsSync(dbPath)) {
       const header = readFileSync(dbPath).slice(0, 16);
       if (!header.toString('ascii').startsWith('SQLite format 3')) {
         try {
-          const key = deriveDbKey(process.env.MAX_TOKEN_PATH);
+          const key = deriveDbKey(process.env.HOOT_TOKEN_PATH ?? process.env.MAX_TOKEN_PATH);
           const keyBytes = Buffer.from(key, 'hex');
           const bytes = readFileSync(dbPath);
           for (let i = 0; i < bytes.length; i++) bytes[i] ^= keyBytes[i % keyBytes.length];
