@@ -52,7 +52,7 @@ I'm your personal AI daemon. I run 24/7 on your machine, remember your preferenc
 
 Built by Gregg Cochran with the GitHub Copilot CLI. Just talk to me like a person — I'll figure out the rest.`;
 
-    await ctx.reply(welcome, { disable_web_page_preview: true });
+    await ctx.reply(welcome, { link_preview_options: { is_disabled: true } });
   });
   bot.command("help", (ctx) =>
     ctx.reply(
