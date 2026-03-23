@@ -574,6 +574,29 @@ export default function Home() {
     }
   }, []);
 
+  /* Synthesized owl hoot via Web Audio API */
+  const playHoot = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const now = ctx.currentTime;
+
+      // Two-tone "hoo-hoo" — low breathy owl call
+      [0, 0.25].forEach((offset) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(380, now + offset);
+        osc.frequency.exponentialRampToValueAtTime(280, now + offset + 0.2);
+        gain.gain.setValueAtTime(0, now + offset);
+        gain.gain.linearRampToValueAtTime(0.3, now + offset + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + offset + 0.25);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.3);
+      });
+    } catch { /* Audio not available */ }
+  }, []);
+
   /* Click superpowers -> owl & lightning burst */
   const handleSuperpowerClick = useCallback((e: React.MouseEvent) => {
     const id = burstIdRef.current++;
@@ -696,10 +719,10 @@ export default function Home() {
 
           <h1
             className="hero-name"
-            onClick={handleOwlClick}
+            onClick={(e) => { handleOwlClick(); handleSuperpowerClick(e); playHoot(); }}
             role="button"
             tabIndex={0}
-            aria-label="Click 5 times fast for a surprise"
+            aria-label="Click for a surprise"
           >
             <span>Hoot 🦉</span>
           </h1>
