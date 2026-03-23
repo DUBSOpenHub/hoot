@@ -6,9 +6,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
    Data
    --------------------------------------------- */
 
-const TYPING_PHRASES = [
+const TYPING_PHRASES_STATIC = [
   "The AI That Never Sleeps",
-  "265 Superpowers and Growing",
   "Message Me From Your Phone",
   "I Ship While You Sleep",
   "Powered by Awesome Copilot",
@@ -249,7 +248,13 @@ export default function Home() {
     skillCount: number;
   }>({ status: "unknown", workers: [], circuitBreakers: {}, skillCount: 0 });
 
-  const typedText = useTypingEffect(TYPING_PHRASES);
+  const skillCount = dashboardData.skillCount || 265;
+  const typingPhrases = [
+    TYPING_PHRASES_STATIC[0],
+    `${skillCount} Superpowers and Growing`,
+    ...TYPING_PHRASES_STATIC.slice(1),
+  ];
+  const typedText = useTypingEffect(typingPhrases);
 
   /* Dashboard polling */
   useEffect(() => {
