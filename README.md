@@ -11,7 +11,7 @@
 **Your personal AI daemon — it runs 24/7 in the background, remembers your preferences, handles tasks while you sleep, and reaches you on Telegram or your terminal.** Ships with [GitHub Copilot SDK](https://github.com/github/copilot-sdk) as the default backend; swap in Ollama, Anthropic, or OpenAI via the `AIProvider` interface.
 
 > **🤖 Built by 109 AI agents across 10 models in 12 hours.**
-> Hoot was designed, implemented, tested, and hardened by a swarm of AI agents orchestrated through [Havoc Hackathon](https://github.com/DUBSOpenHub/havoc-hackathon) and [Dark Factory](https://github.com/DUBSOpenHub/dark-factory) — 33 primary agents and 76 sub-agents spanning Claude Opus, Sonnet, GPT-5.x, and Gemini. 233 tests. Zero human-written source code.
+> Hoot was designed, implemented, tested, and hardened by a swarm of AI agents orchestrated through 33 primary agents and 76 sub-agents spanning Claude Opus, Sonnet, GPT-5.x, and Gemini. 233 tests. Zero human-written source code.
 
 ### 📊 [**Learn more about Hoot here**](https://dubsopenhub.github.io/hoot/)
 
