@@ -3,6 +3,155 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 
 /* ---------------------------------------------
+   Scroll-triggered visibility hook
+   --------------------------------------------- */
+
+function useInView(threshold = 0.3) {
+  const [inView, setInView] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return { inView, ref };
+}
+
+/* ---------------------------------------------
+   Count-up: numbers tick from 0 → target
+   --------------------------------------------- */
+
+function AnimatedNumber({ value, duration = 1500, suffix = "" }: { value: number; duration?: number; suffix?: string }) {
+  const { inView, ref } = useInView();
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!inView || value <= 0) return;
+    const startTime = performance.now();
+    let raf: number;
+    const step = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.round(eased * value));
+      if (progress < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, value, duration]);
+
+  return <span ref={ref}>{value > 0 ? count : "..."}{suffix}</span>;
+}
+
+/* ---------------------------------------------
+   Slot roll: digits cascade like a slot machine
+   --------------------------------------------- */
+
+function SlotNumber({ value, duration = 1200 }: { value: string; duration?: number }) {
+  const { inView, ref } = useInView();
+  const [displayed, setDisplayed] = useState(value.split("").map(() => "\u00A0"));
+
+  useEffect(() => {
+    if (!inView) return;
+    const chars = value.split("");
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    chars.forEach((ch, i) => {
+      const isDigit = /\d/.test(ch);
+      const steps = isDigit ? 8 + i * 3 : 0;
+      const stepDuration = duration / (steps + chars.length);
+      for (let s = 0; s <= steps; s++) {
+        timers.push(setTimeout(() => {
+          setDisplayed(prev => {
+            const next = [...prev];
+            next[i] = s < steps ? String(Math.floor(Math.random() * 10)) : ch;
+            return next;
+          });
+        }, i * stepDuration * 2 + s * stepDuration));
+      }
+      if (!isDigit) {
+        timers.push(setTimeout(() => {
+          setDisplayed(prev => { const next = [...prev]; next[i] = ch; return next; });
+        }, i * stepDuration * 2));
+      }
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [inView, value, duration]);
+
+  return <span ref={ref} style={{ fontVariantNumeric: "tabular-nums" }}>{displayed.join("")}</span>;
+}
+
+/* ---------------------------------------------
+   Pop-in: element scales from 0 → 1 with bounce
+   --------------------------------------------- */
+
+function PopIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const { inView, ref } = useInView(0.5);
+  return (
+    <span
+      ref={ref}
+      style={{
+        display: "inline-block",
+        transform: inView ? "scale(1)" : "scale(0)",
+        opacity: inView ? 1 : 0,
+        transition: `transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms, opacity 0.3s ease ${delay}ms`,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+/* ---------------------------------------------
+   Typewriter number: digits appear one at a time
+   --------------------------------------------- */
+
+function TypewriterNumber({ value, charDelay = 80 }: { value: string; charDelay?: number }) {
+  const { inView, ref } = useInView();
+  const [visibleChars, setVisibleChars] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    const chars = value.length;
+    let i = 0;
+    const timer = setInterval(() => {
+      i++;
+      setVisibleChars(i);
+      if (i >= chars) clearInterval(timer);
+    }, charDelay);
+    return () => clearInterval(timer);
+  }, [inView, value, charDelay]);
+
+  return (
+    <span ref={ref} style={{ fontVariantNumeric: "tabular-nums" }}>
+      {value.slice(0, visibleChars)}
+      {visibleChars < value.length && <span style={{ opacity: 0.3 }}>{"_"}</span>}
+    </span>
+  );
+}
+
+/* ---------------------------------------------
+   Skill marquee: infinite horizontal scroll
+   --------------------------------------------- */
+
+function SkillMarquee({ items, direction = "left", speed = 30 }: { items: string[]; direction?: "left" | "right"; speed?: number }) {
+  const doubled = [...items, ...items];
+  const dur = items.length * (60 / speed);
+  return (
+    <div className="marquee-track" style={{ ["--marquee-dir" as string]: direction === "left" ? "normal" : "reverse" }}>
+      <div className="marquee-inner" style={{ animationDuration: `${dur}s` }}>
+        {doubled.map((s, i) => (
+          <span key={`${s}-${i}`} className="marquee-chip">{s}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------
    Data
    --------------------------------------------- */
 
@@ -61,6 +210,21 @@ const SKILL_CATEGORIES = [
     glowColor: "rgba(124,58,237,.15)",
     skills: ["Copilot SDK", "MCP Server Generators", "Declarative Agents", "Semantic Kernel", "Agent Governance"],
   },
+];
+
+const MARQUEE_ROW_1 = [
+  "Playwright Generate Test", "Azure Deployment Preflight", "Create README", "Copilot SDK",
+  "MCP Server Generators", "Refactor", "Web Coder", "Agent Governance", "PRD",
+  "Documentation Writer", "Multi-Stage Dockerfile", "Polyglot Test Agent", "GitHub Actions Workflow",
+  "Create Specification", "Architecture Blueprint", "DevOps Rollout Plan", "Meeting Minutes",
+  "Semantic Kernel", "Import Infrastructure as Code", "Power BI DAX Optimization",
+];
+const MARQUEE_ROW_2 = [
+  "Pytest Coverage", "Declarative Agents", "Azure Resource Visualizer", "Premium Frontend UI",
+  "Java Refactoring", "ScoutQA Test", "Git Commit", "TypeSpec API", "Dependabot",
+  "Create Implementation Plan", "Copilot Spaces", "SQL Optimization", "Terraform Analyzer",
+  "Code Exemplars Blueprint", "Prompt Builder", "Apple App Store Reviewer", "Agentic Eval",
+  "Sponsor Finder", "Context Map", "Structured Autonomy",
 ];
 
 const PROJECTS = [
@@ -568,7 +732,7 @@ export default function Home() {
                 position: "absolute", inset: 0, opacity: 0.07,
                 background: "radial-gradient(circle at 50% 50%, var(--accent1), transparent 70%)",
               }} />
-              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>5</div>
+              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}><AnimatedNumber value={5} duration={800} /></div>
               <div className="stat-label" style={{ position: "relative" }}>Parallel Agents</div>
               <p style={{ fontSize: ".78rem", color: "var(--muted)", marginTop: ".5rem", lineHeight: 1.5, position: "relative" }}>
                 Five AI sessions, each with its own context window
@@ -585,7 +749,7 @@ export default function Home() {
                 position: "absolute", inset: 0, opacity: 0.1,
                 background: "radial-gradient(circle at 50% 50%, var(--accent1), transparent 70%)",
               }} />
-              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>{skillCount}</div>
+              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}><AnimatedNumber value={skillCount} duration={1800} /></div>
               <div className="stat-label" style={{ position: "relative" }}>Superpowers</div>
               <p style={{ fontSize: ".78rem", color: "var(--muted)", marginTop: ".5rem", lineHeight: 1.5, position: "relative" }}>
                 Skills, tools, and agents from the community
@@ -598,7 +762,7 @@ export default function Home() {
                 position: "absolute", inset: 0, opacity: 0.07,
                 background: "radial-gradient(circle at 50% 50%, var(--accent2), transparent 70%)",
               }} />
-              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}>6am</div>
+              <div className="stat-number" style={{ fontSize: "3rem", position: "relative" }}><SlotNumber value="6am" duration={1400} /></div>
               <div className="stat-label" style={{ position: "relative" }}>Daily Auto-Sync</div>
               <p style={{ fontSize: ".78rem", color: "var(--muted)", marginTop: ".5rem", lineHeight: 1.5, position: "relative" }}>
                 New abilities added every morning
@@ -680,19 +844,19 @@ export default function Home() {
 
             <div className="about-stats">
               <div className="stat-card">
-                <div className="stat-number">{skillCount}</div>
+                <div className="stat-number"><AnimatedNumber value={skillCount} duration={1800} /></div>
                 <div className="stat-label">Superpowers</div>
               </div>
               <div className="stat-card">
-                <div className="stat-number">5</div>
+                <div className="stat-number"><AnimatedNumber value={5} duration={800} /></div>
                 <div className="stat-label">Parallel Tasks</div>
               </div>
               <div className="stat-card">
-                <div className="stat-number">3s</div>
+                <div className="stat-number"><AnimatedNumber value={3} duration={600} suffix="s" /></div>
                 <div className="stat-label">Avg Response</div>
               </div>
               <div className="stat-card">
-                <div className="stat-number">24/7</div>
+                <div className="stat-number"><PopIn delay={400}>24/7</PopIn></div>
                 <div className="stat-label">Always On</div>
               </div>
             </div>
@@ -716,7 +880,7 @@ export default function Home() {
                   <span className="br">{"{"}</span>
                   {"\n"}
                   {"  "}superpowers<span className="br">:</span>{" "}
-                  <span className="num">{skillCount || "..."}</span>
+                  <span className="num"><TypewriterNumber value={String(skillCount || "...")} charDelay={60} /></span>
                   <span className="br">,</span>
                   {"\n"}
                   {"  "}source<span className="br">:</span>{" "}
@@ -756,7 +920,7 @@ export default function Home() {
         <div className="skills-header reveal">
           <span className="section-label">Superpowers</span>
           <h2 className="section-title">
-            {skillCount} Superpowers, <em>One Owl</em>
+            <AnimatedNumber value={skillCount} duration={2000} /> Superpowers, <em>One Owl</em>
           </h2>
           <p className="section-sub">
             Hoot is connected to{" "}
@@ -767,6 +931,11 @@ export default function Home() {
             {"\u2014"} the open source community{"\u2019"}s growing collection of skills,
             tools, and agents. New superpowers sync automatically every morning.
           </p>
+        </div>
+
+        <div className="marquee-wrap reveal">
+          <SkillMarquee items={MARQUEE_ROW_1} direction="left" speed={25} />
+          <SkillMarquee items={MARQUEE_ROW_2} direction="right" speed={20} />
         </div>
 
         <div className="skills-grid">
@@ -884,11 +1053,11 @@ export default function Home() {
               <div className="stat-label">Hoot Status</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">{dashboardData.status === "ok" ? dashboardData.workers.length : 5}</div>
+              <div className="stat-number"><AnimatedNumber value={dashboardData.status === "ok" ? dashboardData.workers.length : 5} duration={800} /></div>
               <div className="stat-label">Parallel Agents</div>
             </div>
             <div className="stat-card">
-              <div className="stat-number">{skillCount}</div>
+              <div className="stat-number"><AnimatedNumber value={skillCount} duration={1800} /></div>
               <div className="stat-label">Superpowers</div>
             </div>
             <div className="stat-card">
