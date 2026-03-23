@@ -1,5 +1,8 @@
 # 🦉 Hoot — The AI That Never Sleeps
 
+<img width="503" height="257" alt="Screenshot 2026-03-23 at 10 49 23 AM" src="https://github.com/user-attachments/assets/a7cfa818-0e37-468a-b969-be46d298d146" />
+
+
 [![npm version](https://img.shields.io/npm/v/hoot.svg)](https://www.npmjs.com/package/hoot)
 [![CI](https://github.com/DUBSOpenHub/hoot/actions/workflows/ci.yml/badge.svg)](https://github.com/DUBSOpenHub/hoot/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
