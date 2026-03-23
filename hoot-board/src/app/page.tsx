@@ -458,7 +458,7 @@ export default function Home() {
   }>({ status: "unknown", workers: [], circuitBreakers: {}, skillCount: 0 });
 
   const [awesomeCopilotCount, setAwesomeCopilotCount] = useState(0);
-  const skillCount = dashboardData.skillCount || awesomeCopilotCount || 220;
+  const skillCount = dashboardData.skillCount || awesomeCopilotCount || 245;
   const skillLabel = skillCount > 0 ? `${skillCount} Superpowers and Growing` : "Superpowers from awesome-copilot";
   const typingPhrases = [
     TYPING_PHRASES_STATIC[0],
