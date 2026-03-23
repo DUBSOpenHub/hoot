@@ -11,7 +11,7 @@
 > **🤖 Built by 109 AI agents across 10 models in 12 hours.**
 > Hoot was designed, implemented, tested, and hardened by a swarm of AI agents orchestrated through [Havoc Hackathon](https://github.com/DUBSOpenHub/havoc-hackathon) and [Dark Factory](https://github.com/DUBSOpenHub/dark-factory) — 33 primary agents and 76 sub-agents spanning Claude Opus, Sonnet, GPT-5.x, and Gemini. 233 tests. Zero human-written source code.
 
-### 📊 [**Learn more about Hoot here → dubsopenhub.github.io/hoot**](https://dubsopenhub.github.io/hoot/)
+### 📊 [**Learn more about Hoot here**](https://dubsopenhub.github.io/hoot/)
 
 > ### ⚡ Three Commands. Done.
 >
