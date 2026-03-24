@@ -1245,7 +1245,7 @@ export default function Home() {
         </p>
         <p className="footer-tagline">
           🤖 Built by over 100 AI agents across 10 models — shipped with the{" "}
-          <span style={{ whiteSpace: "nowrap" }}>GitHub Copilot CLI</span>. No IDE. No hand-written code.
+          <span style={{ whiteSpace: "nowrap" }}>GitHub Copilot CLI</span>. No hand-written code.
         </p>
         <p className="footer-mantra">
           If you can describe what you want, you can build it.{" "}
