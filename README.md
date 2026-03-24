@@ -13,8 +13,8 @@
 
 > **🧩 Powered by [awesome-copilot](https://github.com/github/awesome-copilot)** — Hoot ships with every skill, tool, and agent from the community catalog and syncs new ones daily. Code generation, testing, DevOps, docs, AI agents, cloud automation — all built in from day one.
 
-> **🤖 Built by 109 AI agents across 10 models in 12 hours.**
-> Hoot was designed, implemented, tested, and hardened by a swarm of AI agents orchestrated through 33 primary agents and 76 sub-agents spanning Claude Opus, Sonnet, GPT-5.x, and Gemini. 233 tests. Zero human-written source code.
+> **🤖 Built by over 100 AI agents across 10 models in 12 hours.**
+> Hoot was designed, implemented, tested, and hardened by a swarm of AI agents orchestrated through the GitHub Copilot CLI, spanning Claude Opus, Sonnet, GPT-5.x, and Gemini. 233 tests. Zero human-written source code.
 
 ### 📊 [**Learn more about Hoot here**](https://dubsopenhub.github.io/hoot/)
 

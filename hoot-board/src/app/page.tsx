@@ -717,7 +717,7 @@ export default function Home() {
                style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px", whiteSpace: "nowrap" }}>
               awesome-copilot
             </a>.
-            {" "}Built by 109 AI agents across 10 models using the GitHub Copilot CLI.
+            {" "}Built by over 100 AI agents across 10 models using the GitHub Copilot CLI.
             No hand-written code.
           </p>
 
@@ -1243,7 +1243,7 @@ export default function Home() {
           <span className="footer-gradient">Gregg Cochran</span>
         </p>
         <p className="footer-tagline">
-          🤖 Built by 109 AI agents across 10 models — shipped with the GitHub Copilot
+          🤖 Built by over 100 AI agents across 10 models — shipped with the GitHub Copilot
           CLI. No IDE. No hand-written code.
         </p>
         <p className="footer-mantra">
