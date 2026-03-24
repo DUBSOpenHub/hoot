@@ -414,7 +414,7 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instruct
 
 ---
 
-🐙 Created by **Gregg Cochran** ([@DUBSOpenHub](https://github.com/DUBSOpenHub)) — an AI-native builder who shipped this entire daemon, every superpower from [awesome-copilot](https://github.com/github/awesome-copilot), and a Telegram bot using nothing but the [GitHub Copilot CLI](https://docs.github.com/copilot/concepts/agents/about-copilot-cli). No IDE. No hand-written code. Just one terminal and up to 100 AI agents.
+🐙 Created by **Gregg Cochran** ([@DUBSOpenHub](https://github.com/DUBSOpenHub)) — an AI-native builder who shipped this entire daemon, every superpower from [awesome-copilot](https://github.com/github/awesome-copilot), and a Telegram bot using nothing but the [GitHub Copilot CLI](https://docs.github.com/copilot/concepts/agents/about-copilot-cli). No hand-written code. Just one terminal and over 100 AI agents.
 
 **The magic of Hoot 🦉:** You message an owl on your phone. The owl thinks, spawns agents, writes code, runs tests, and messages you back when it's done. You walk away. You come back. The work is finished. That's it. That's the whole product. An owl that never sleeps, never forgets, and does what you tell it — from anywhere.
 
