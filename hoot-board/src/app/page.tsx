@@ -747,6 +747,25 @@ export default function Home() {
         </div>
       </section>
 
+      {/* AI AGENT BANNER */}
+      <div className="ai-agent-banner reveal" style={{
+        background: "linear-gradient(90deg, var(--accent1) 0%, var(--accent2) 100%)",
+        color: "#fff",
+        fontWeight: 700,
+        fontSize: "1.15rem",
+        borderRadius: "1.2rem",
+        boxShadow: "0 4px 32px rgba(124,58,237,.13)",
+        padding: "1.1rem 2.2rem",
+        margin: "2.5rem auto 2.5rem auto",
+        maxWidth: 700,
+        letterSpacing: 0.01,
+        textAlign: "center",
+        border: "2px solid var(--accent3)",
+        zIndex: 2
+      }}>
+        Built by 109 AI agents across 10 models using the GitHub Copilot CLI. No hand-written code.
+      </div>
+
       {/* AGENT POWER BAR */}
       <section className="hoot-section" style={{ paddingTop: "4rem", paddingBottom: "4rem" }}>
         <div className="reveal" style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center" }}>
