@@ -717,7 +717,8 @@ export default function Home() {
                style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px", whiteSpace: "nowrap" }}>
               awesome-copilot
             </a>.
-            {" "}Built by over 100 AI agents across 10 models using the GitHub Copilot CLI.
+            {" "}Built by over 100 AI agents across 10 models using the{" "}
+            <span style={{ whiteSpace: "nowrap" }}>GitHub Copilot CLI</span>.
             No hand-written code.
           </p>
 
@@ -1243,8 +1244,8 @@ export default function Home() {
           <span className="footer-gradient">Gregg Cochran</span>
         </p>
         <p className="footer-tagline">
-          🤖 Built by over 100 AI agents across 10 models — shipped with the GitHub Copilot
-          CLI. No IDE. No hand-written code.
+          🤖 Built by over 100 AI agents across 10 models — shipped with the{" "}
+          <span style={{ whiteSpace: "nowrap" }}>GitHub Copilot CLI</span>. No IDE. No hand-written code.
         </p>
         <p className="footer-mantra">
           If you can describe what you want, you can build it.{" "}
