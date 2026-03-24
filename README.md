@@ -296,6 +296,7 @@ All configuration lives in `~/.hoot/.env`. Every variable is optional — Hoot w
 | `HOOT_LOG_LEVEL` | `info` | Log level: `debug`, `info`, `warn`, `error` |
 | `HOOT_PLUGINS_ENABLED` | `0` | Load plugins from `~/.hoot/plugins/` |
 | `HOOT_SELF_EDIT` | `0` | Allow Hoot to modify its own source files |
+| `HOOT_TELEMETRY` | `1` | Anonymous one-time startup ping (set `0` to disable) |
 | `HOOT_TUI_DEBUG` | `0` | Enable TUI debug logging |
 
 ---

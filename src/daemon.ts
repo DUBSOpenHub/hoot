@@ -19,6 +19,7 @@ import { readFileSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { checkForUpdate } from "./update.js";
+import { startupPing } from "./telemetry.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageVersion: string = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf8")).version;
@@ -99,6 +100,8 @@ async function main(): Promise<void> {
   }
 
   log.info("Hoot 🦉 is fully operational.");
+
+  startupPing().catch(() => {});
 
   checkForUpdate()
     .then(({ updateAvailable, current, latest }) => {
