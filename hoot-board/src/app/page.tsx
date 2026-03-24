@@ -717,6 +717,8 @@ export default function Home() {
                style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
               awesome-copilot
             </a>.
+            {" "}Built by 109 AI agents across 10 models using the GitHub Copilot CLI.
+            No hand-written code.
           </p>
 
           <div className="hero-actions">
@@ -738,24 +740,6 @@ export default function Home() {
               View on GitHub {"\u2192"}
             </a>
 
-          </div>
-
-          <div className="ai-agent-banner" style={{
-            background: "linear-gradient(90deg, var(--accent1) 0%, var(--accent2) 100%)",
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: "clamp(0.85rem, 2vw, 1.05rem)",
-            borderRadius: "1.2rem",
-            boxShadow: "0 4px 32px rgba(124,58,237,.13)",
-            padding: "0.8rem 1.8rem",
-            marginTop: "2rem",
-            maxWidth: 600,
-            letterSpacing: 0.01,
-            textAlign: "center",
-            border: "2px solid var(--accent3)",
-            zIndex: 2
-          }}>
-            Built by 109 AI agents across 10 models using the GitHub Copilot CLI. No hand-written code.
           </div>
         </div>
 
