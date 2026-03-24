@@ -774,7 +774,7 @@ export default function Home() {
             has access to every superpower in the library.
           </p>
 
-          <div style={{
+          <div className="scale-stats-grid" style={{
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
             gap: "1.5rem",
@@ -1101,7 +1101,7 @@ export default function Home() {
 
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           {/* Status + Model Row */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }} className="reveal">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem", marginBottom: "2rem" }} className="reveal dashboard-stats-grid">
             <div className="stat-card">
               <div className="stat-number" style={{ color: dashboardData.status === "ok" ? "var(--green)" : "var(--accent3)" }}>
                 {dashboardData.status === "ok" ? "● Online" : "● Ready to Install"}
