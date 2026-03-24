@@ -96,6 +96,12 @@ export class WorkerPool {
         s.workingDir = undefined;
       }
     }
+    // Hackathon #48: resolve waiting checkout callers immediately
+    if (this._legacyWaiters.length > 0) {
+      ps.status = "checked-out";
+      const resolve = this._legacyWaiters.shift()!;
+      resolve(ps);
+    }
   }
 
   async discard(ps: PooledSession): Promise<void> {
@@ -210,6 +216,9 @@ export class WorkerPool {
     });
   }
 
+  // Hackathon #48: event-driven waiters replace setInterval(100ms) polling
+  private _legacyWaiters: Array<(ps: PooledSession) => void> = [];
+
   private async _legacyCheckout(workingDir: string): Promise<PooledSession> {
     const warm = this._legacySessions.find(
       (s) => s.status === "warm" && !this._isExpiredLegacy(s)
@@ -228,21 +237,16 @@ export class WorkerPool {
     }
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        clearInterval(poll);
+        const idx = this._legacyWaiters.indexOf(wrappedResolve);
+        if (idx !== -1) this._legacyWaiters.splice(idx, 1);
         reject(new Error("Worker pool checkout timed out after 120s — all sessions are busy"));
       }, WorkerPool.CHECKOUT_TIMEOUT_MS);
-      const poll = setInterval(() => {
-        const w = this._legacySessions.find(
-          (s) => s.status === "warm" && !this._isExpiredLegacy(s)
-        );
-        if (w) {
-          clearInterval(poll);
-          clearTimeout(timer);
-          w.status = "checked-out";
-          w.workingDir = workingDir;
-          resolve(w);
-        }
-      }, 100);
+      const wrappedResolve = (ps: PooledSession) => {
+        clearTimeout(timer);
+        ps.workingDir = workingDir;
+        resolve(ps);
+      };
+      this._legacyWaiters.push(wrappedResolve);
     });
   }
 

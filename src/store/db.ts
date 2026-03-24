@@ -164,32 +164,48 @@ export function getDb(): Database.Database {
   return db;
 }
 
+// Hackathon #48: TTL cache for hot-path reads (from GPT-5.4)
+interface CacheEntry<T> { value: T; expires: number }
+const _stateCache = new Map<string, CacheEntry<string | undefined>>();
+const STATE_CACHE_TTL = 60_000;
+
 export function getState(key: string): string | undefined {
+  const cached = _stateCache.get(key);
+  if (cached && cached.expires > Date.now()) return cached.value;
   const db = getDb();
   const row = db.prepare(`SELECT value FROM hoot_state WHERE key = ?`).get(key) as { value: string } | undefined;
+  _stateCache.set(key, { value: row?.value, expires: Date.now() + STATE_CACHE_TTL });
   return row?.value;
 }
 
 export function setState(key: string, value: string): void {
   const db = getDb();
   db.prepare(`INSERT OR REPLACE INTO hoot_state (key, value) VALUES (?, ?)`).run(key, value);
+  _stateCache.set(key, { value, expires: Date.now() + STATE_CACHE_TTL });
 }
 
 export function deleteState(key: string): void {
   const db = getDb();
   db.prepare(`DELETE FROM hoot_state WHERE key = ?`).run(key);
+  _stateCache.delete(key);
 }
 
 export function logConversation(role: "user" | "assistant" | "system", content: string, source: string): void {
   const db = getDb();
   db.prepare(`INSERT INTO conversation_log (role, content, source) VALUES (?, ?, ?)`).run(role, content, source);
+  _recentConvCache = undefined; // invalidate cache on new entry
   logInsertCount++;
   if (logInsertCount % 50 === 0) {
     db.prepare(`DELETE FROM conversation_log WHERE id NOT IN (SELECT id FROM conversation_log ORDER BY id DESC LIMIT 200)`).run();
   }
 }
 
+// Hackathon #48: cache recent conversation (10s TTL)
+let _recentConvCache: CacheEntry<string> | undefined;
+const RECENT_CONV_TTL = 10_000;
+
 export function getRecentConversation(limit = 20): string {
+  if (_recentConvCache && _recentConvCache.expires > Date.now()) return _recentConvCache.value;
   const db = getDb();
   const rows = db.prepare(
     `SELECT role, content, source, ts FROM conversation_log ORDER BY id DESC LIMIT ?`
@@ -199,13 +215,15 @@ export function getRecentConversation(limit = 20): string {
 
   rows.reverse();
 
-  return rows.map((r) => {
+  const result = rows.map((r) => {
     const tag = r.role === "user" ? `[${r.source}] User`
       : r.role === "system" ? `[${r.source}] System`
       : "Hoot 🦉";
     const content = r.content.length > 500 ? r.content.slice(0, 500) + "…" : r.content;
     return `${tag}: ${content}`;
   }).join("\n\n");
+  _recentConvCache = { value: result, expires: Date.now() + RECENT_CONV_TTL };
+  return result;
 }
 
 export function addMemory(
@@ -217,6 +235,7 @@ export function addMemory(
   const result = db.prepare(
     `INSERT INTO memories (category, content, source) VALUES (?, ?, ?)`
   ).run(category, content, source);
+  _memorySummaryCache = undefined; // invalidate cache
   return result.lastInsertRowid as number;
 }
 
@@ -256,10 +275,16 @@ export function searchMemories(
 export function removeMemory(id: number): boolean {
   const db = getDb();
   const result = db.prepare(`DELETE FROM memories WHERE id = ?`).run(id);
+  if (result.changes > 0) _memorySummaryCache = undefined; // invalidate cache
   return result.changes > 0;
 }
 
+// Hackathon #48: cache memory summary (60s TTL)
+let _memorySummaryCache: CacheEntry<string> | undefined;
+const MEMORY_SUMMARY_TTL = 60_000;
+
 export function getMemorySummary(): string {
+  if (_memorySummaryCache && _memorySummaryCache.expires > Date.now()) return _memorySummaryCache.value;
   const db = getDb();
   const rows = db.prepare(
     `SELECT id, category, content FROM memories ORDER BY category, last_accessed DESC`
@@ -278,7 +303,9 @@ export function getMemorySummary(): string {
     return `**${cat}**:\n${lines}`;
   });
 
-  return sections.join("\n");
+  const result = sections.join("\n");
+  _memorySummaryCache = { value: result, expires: Date.now() + MEMORY_SUMMARY_TTL };
+  return result;
 }
 
 export function closeDb(): void {
