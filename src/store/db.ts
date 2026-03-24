@@ -69,11 +69,19 @@ export function getDb(): Database.Database {
       )
     `);
     db.exec(`
-      CREATE TABLE IF NOT EXISTS max_state (
+      CREATE TABLE IF NOT EXISTS hoot_state (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
       )
     `);
+    // Migrate legacy table name
+    try {
+      const hasLegacy = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='hoot_state'`).get();
+      if (hasLegacy) {
+        db.exec(`INSERT OR IGNORE INTO hoot_state (key, value) SELECT key, value FROM hoot_state`);
+        db.exec(`DROP TABLE hoot_state`);
+      }
+    } catch {}
     db.exec(`
       CREATE TABLE IF NOT EXISTS conversation_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,18 +166,18 @@ export function getDb(): Database.Database {
 
 export function getState(key: string): string | undefined {
   const db = getDb();
-  const row = db.prepare(`SELECT value FROM max_state WHERE key = ?`).get(key) as { value: string } | undefined;
+  const row = db.prepare(`SELECT value FROM hoot_state WHERE key = ?`).get(key) as { value: string } | undefined;
   return row?.value;
 }
 
 export function setState(key: string, value: string): void {
   const db = getDb();
-  db.prepare(`INSERT OR REPLACE INTO max_state (key, value) VALUES (?, ?)`).run(key, value);
+  db.prepare(`INSERT OR REPLACE INTO hoot_state (key, value) VALUES (?, ?)`).run(key, value);
 }
 
 export function deleteState(key: string): void {
   const db = getDb();
-  db.prepare(`DELETE FROM max_state WHERE key = ?`).run(key);
+  db.prepare(`DELETE FROM hoot_state WHERE key = ?`).run(key);
 }
 
 export function logConversation(role: "user" | "assistant" | "system", content: string, source: string): void {

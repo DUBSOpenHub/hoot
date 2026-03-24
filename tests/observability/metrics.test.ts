@@ -42,7 +42,7 @@ describe('FR-6.4 — GET /metrics Prometheus format', () => {
     expect(res.headers['content-type']).toMatch(/text\/plain/);
   });
 
-  it('FR-6.4: /metrics response includes max_messages_total counter', async () => {
+  it('FR-6.4: /metrics response includes hoot_messages_total counter', async () => {
     let request: typeof import('supertest');
     let app: unknown;
     try {
@@ -51,10 +51,10 @@ describe('FR-6.4 — GET /metrics Prometheus format', () => {
     } catch { return; }
 
     const res = await (request as (app: unknown) => { get: (path: string) => Promise<{ status: number; text: string }> })(app).get('/metrics');
-    expect(res.text).toMatch(/max_messages_total/);
+    expect(res.text).toMatch(/hoot_messages_total/);
   });
 
-  it('FR-6.4: max_messages_total has tier and channel labels', async () => {
+  it('FR-6.4: hoot_messages_total has tier and channel labels', async () => {
     let request: typeof import('supertest');
     let app: unknown;
     try {
@@ -64,11 +64,11 @@ describe('FR-6.4 — GET /metrics Prometheus format', () => {
 
     const res = await (request as (app: unknown) => { get: (path: string) => Promise<{ text: string }> })(app).get('/metrics');
     // Prometheus label syntax: metric_name{label="value"}
-    expect(res.text).toMatch(/max_messages_total\{[^}]*tier=/);
-    expect(res.text).toMatch(/max_messages_total\{[^}]*channel=/);
+    expect(res.text).toMatch(/hoot_messages_total\{[^}]*tier=/);
+    expect(res.text).toMatch(/hoot_messages_total\{[^}]*channel=/);
   });
 
-  it('FR-6.4: /metrics response includes max_message_duration_ms histogram', async () => {
+  it('FR-6.4: /metrics response includes hoot_message_duration_ms histogram', async () => {
     let request: typeof import('supertest');
     let app: unknown;
     try {
@@ -77,10 +77,10 @@ describe('FR-6.4 — GET /metrics Prometheus format', () => {
     } catch { return; }
 
     const res = await (request as (app: unknown) => { get: (path: string) => Promise<{ text: string }> })(app).get('/metrics');
-    expect(res.text).toMatch(/max_message_duration_ms/);
+    expect(res.text).toMatch(/hoot_message_duration_ms/);
   });
 
-  it('FR-6.4: max_message_duration_ms has tier and quantile labels', async () => {
+  it('FR-6.4: hoot_message_duration_ms has tier and quantile labels', async () => {
     let request: typeof import('supertest');
     let app: unknown;
     try {
@@ -89,10 +89,10 @@ describe('FR-6.4 — GET /metrics Prometheus format', () => {
     } catch { return; }
 
     const res = await (request as (app: unknown) => { get: (path: string) => Promise<{ text: string }> })(app).get('/metrics');
-    expect(res.text).toMatch(/max_message_duration_ms.*quantile/);
+    expect(res.text).toMatch(/hoot_message_duration_ms.*quantile/);
   });
 
-  it('FR-6.4: /metrics includes max_worker_pool_utilization gauge', async () => {
+  it('FR-6.4: /metrics includes hoot_worker_pool_utilization gauge', async () => {
     let request: typeof import('supertest');
     let app: unknown;
     try {
@@ -101,10 +101,10 @@ describe('FR-6.4 — GET /metrics Prometheus format', () => {
     } catch { return; }
 
     const res = await (request as (app: unknown) => { get: (path: string) => Promise<{ text: string }> })(app).get('/metrics');
-    expect(res.text).toMatch(/max_worker_pool_utilization/);
+    expect(res.text).toMatch(/hoot_worker_pool_utilization/);
   });
 
-  it('FR-6.4: /metrics includes max_circuit_breaker_state gauge', async () => {
+  it('FR-6.4: /metrics includes hoot_circuit_breaker_state gauge', async () => {
     let request: typeof import('supertest');
     let app: unknown;
     try {
@@ -113,10 +113,10 @@ describe('FR-6.4 — GET /metrics Prometheus format', () => {
     } catch { return; }
 
     const res = await (request as (app: unknown) => { get: (path: string) => Promise<{ text: string }> })(app).get('/metrics');
-    expect(res.text).toMatch(/max_circuit_breaker_state/);
+    expect(res.text).toMatch(/hoot_circuit_breaker_state/);
   });
 
-  it('FR-6.4: max_circuit_breaker_state has a breaker label', async () => {
+  it('FR-6.4: hoot_circuit_breaker_state has a breaker label', async () => {
     let request: typeof import('supertest');
     let app: unknown;
     try {
@@ -125,7 +125,7 @@ describe('FR-6.4 — GET /metrics Prometheus format', () => {
     } catch { return; }
 
     const res = await (request as (app: unknown) => { get: (path: string) => Promise<{ text: string }> })(app).get('/metrics');
-    expect(res.text).toMatch(/max_circuit_breaker_state\{[^}]*breaker=/);
+    expect(res.text).toMatch(/hoot_circuit_breaker_state\{[^}]*breaker=/);
   });
 
   it('FR-6.4: /metrics response body is valid Prometheus text format (# HELP or # TYPE headers)', async () => {

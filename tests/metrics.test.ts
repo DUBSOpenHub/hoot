@@ -17,26 +17,26 @@ describe("MetricsCollector", () => {
   });
 
   it("increments counters with labels", () => {
-    m.increment("max_messages_total", { tier: "fast", channel: "tui" });
-    m.increment("max_messages_total", { tier: "fast", channel: "tui" });
-    m.increment("max_messages_total", { tier: "premium", channel: "telegram" });
+    m.increment("hoot_messages_total", { tier: "fast", channel: "tui" });
+    m.increment("hoot_messages_total", { tier: "fast", channel: "tui" });
+    m.increment("hoot_messages_total", { tier: "premium", channel: "telegram" });
     const output = m.render();
-    expect(output).toContain('max_messages_total{tier="fast",channel="tui"} 2');
-    expect(output).toContain('max_messages_total{tier="premium",channel="telegram"} 1');
+    expect(output).toContain('hoot_messages_total{tier="fast",channel="tui"} 2');
+    expect(output).toContain('hoot_messages_total{tier="premium",channel="telegram"} 1');
   });
 
   it("records histogram observations", () => {
-    m.observe("max_response_duration_seconds", 250);
-    m.observe("max_response_duration_seconds", 500);
+    m.observe("hoot_response_duration_seconds", 250);
+    m.observe("hoot_response_duration_seconds", 500);
     const output = m.render();
-    expect(output).toContain("max_response_duration_seconds_count 2");
-    expect(output).toContain("max_response_duration_seconds_sum 750");
+    expect(output).toContain("hoot_response_duration_seconds_count 2");
+    expect(output).toContain("hoot_response_duration_seconds_sum 750");
   });
 
   it("sets gauge values", () => {
-    m.gauge("max_workers_active", 3);
+    m.gauge("hoot_workers_active", 3);
     const output = m.render();
-    expect(output).toContain("max_workers_active 3");
+    expect(output).toContain("hoot_workers_active 3");
   });
 
   it("updates gauge to latest value", () => {
@@ -48,20 +48,20 @@ describe("MetricsCollector", () => {
   });
 
   it("renders valid Prometheus text format", () => {
-    m.increment("max_messages_total", { tier: "standard" });
-    m.observe("max_response_duration_seconds", 100);
-    m.gauge("max_workers_active", 2);
+    m.increment("hoot_messages_total", { tier: "standard" });
+    m.observe("hoot_response_duration_seconds", 100);
+    m.gauge("hoot_workers_active", 2);
     const output = m.render();
     // Must have TYPE declarations
-    expect(output).toContain("# TYPE max_messages_total counter");
-    expect(output).toContain("# TYPE max_response_duration_seconds histogram");
-    expect(output).toContain("# TYPE max_workers_active gauge");
+    expect(output).toContain("# TYPE hoot_messages_total counter");
+    expect(output).toContain("# TYPE hoot_response_duration_seconds histogram");
+    expect(output).toContain("# TYPE hoot_workers_active gauge");
   });
 
   it("includes built-in uptime and memory gauges", () => {
     const output = m.render();
-    expect(output).toContain("max_uptime_seconds");
-    expect(output).toContain("max_memory_rss_bytes");
+    expect(output).toContain("hoot_uptime_seconds");
+    expect(output).toContain("hoot_memory_rss_bytes");
   });
 
   it("histogram has _bucket, _sum, _count entries", () => {

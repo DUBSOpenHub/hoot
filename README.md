@@ -332,10 +332,10 @@ When `HOOT_LOG_FORMAT=json` (default), all output is structured JSON piped to st
 Prometheus metrics available at `GET http://127.0.0.1:7777/metrics`:
 
 ```
-max_messages_total{tier="standard",channel="telegram"} 42
-max_response_duration_seconds{tier="fast",quantile="0.95"} 0.8
-max_workers_active 2
-max_uptime_seconds 86400
+hoot_messages_total{tier="standard",channel="telegram"} 42
+hoot_response_duration_seconds{tier="fast",quantile="0.95"} 0.8
+hoot_workers_active 2
+hoot_uptime_seconds 86400
 ```
 
 ---

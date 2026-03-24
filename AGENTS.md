@@ -2,7 +2,7 @@
 
 ## Overview
 
-Hoot is a personal AI daemon with a pluggable AI backend (ships with [GitHub Copilot SDK](https://github.com/github/copilot-sdk) as the default; swap in Ollama, Anthropic, or OpenAI via the `AIProvider` interface). It runs as a background process (`~/.max/` — Hoot config directory, kept for backward compatibility) and exposes three channel interfaces — a Telegram bot, a terminal TUI, and a local HTTP API — all routed through a single **Orchestrator** brain. Agent logic is implemented as AI sessions via the `AIProvider`; background tasks are delegated to isolated **Worker** sessions; complexity routing is handled by a lightweight **Classifier** agent that keeps heavy models reserved for hard problems.
+Hoot is a personal AI daemon with a pluggable AI backend (ships with [GitHub Copilot SDK](https://github.com/github/copilot-sdk) as the default; swap in Ollama, Anthropic, or OpenAI via the `AIProvider` interface). It runs as a background process (`~/.hoot/` — Hoot config directory) and exposes three channel interfaces — a Telegram bot, a terminal TUI, and a local HTTP API — all routed through a single **Orchestrator** brain. Agent logic is implemented as AI sessions via the `AIProvider`; background tasks are delegated to isolated **Worker** sessions; complexity routing is handled by a lightweight **Classifier** agent that keeps heavy models reserved for hard problems.
 
 ```
  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
@@ -64,7 +64,7 @@ A dedicated `gpt-4.1` session that classifies each incoming message into one of 
 | `STANDARD` | Mid-tier | Coding tasks, file ops, tool usage |
 | `PREMIUM` | Flagship | Architecture, deep analysis, system design |
 
-Falls back to heuristic routing if the classifier session is unavailable. The active tier model mapping is configurable via `POST /auto` and stored in `~/.max/.env`.
+Falls back to heuristic routing if the classifier session is unavailable. The active tier model mapping is configurable via `POST /auto` and stored in `~/.hoot/.env`.
 
 ---
 
@@ -104,7 +104,7 @@ Each channel is a thin adapter that:
 
 ## Plugin System (`src/plugins/`)
 
-Plugins are Node.js CommonJS modules placed in `~/.max/plugins/<name>/index.js`. They are loaded when `MAX_PLUGINS_ENABLED=1` and hot-reloaded on file change.
+Plugins are Node.js CommonJS modules placed in `~/.hoot/plugins/<name>/index.js`. They are loaded when `HOOT_PLUGINS_ENABLED=1` and hot-reloaded on file change.
 
 ### Plugin contract (`src/plugins/types.ts`)
 
@@ -131,7 +131,7 @@ The `PluginContext` passed to `onLoad` provides:
 ### Creating a custom plugin agent
 
 ```
-~/.max/plugins/
+~/.hoot/plugins/
 └── my-plugin/
     └── index.js    ← CommonJS module exporting HootPlugin
 ```
@@ -139,7 +139,7 @@ The `PluginContext` passed to `onLoad` provides:
 **Minimal example:**
 
 ```javascript
-// ~/.max/plugins/my-plugin/index.js
+// ~/.hoot/plugins/my-plugin/index.js
 const { defineTool } = require("@github/copilot-sdk");
 const { z } = require("zod");
 
@@ -177,7 +177,7 @@ module.exports = {
 Enable plugins and restart:
 
 ```bash
-echo "MAX_PLUGINS_ENABLED=1" >> ~/.max/.env
+echo "HOOT_PLUGINS_ENABLED=1" >> ~/.hoot/.env
 hoot restart
 ```
 
@@ -185,7 +185,7 @@ hoot restart
 
 ## Worker Pool Lifecycle (`src/workers/pool.ts`)
 
-When `MAX_POOL_ENABLED=1`, AI sessions are reused across tasks to eliminate the per-task session-creation overhead.
+When `HOOT_POOL_ENABLED=1`, AI sessions are reused across tasks to eliminate the per-task session-creation overhead.
 
 ```
            start()
@@ -247,7 +247,7 @@ const result = await breaker.execute(() => session.sendAndWait(prompt));
 
 ## Observability (`src/observability/logger.ts`)
 
-Every module calls `createLogger("component-name")` for a structured logger. Output format is controlled by `MAX_LOG_FORMAT`:
+Every module calls `createLogger("component-name")` for a structured logger. Output format is controlled by `HOOT_LOG_FORMAT`:
 
 | Value | Output |
 |-------|--------|
@@ -255,7 +255,7 @@ Every module calls `createLogger("component-name")` for a structured logger. Out
 | `pretty` | Colour-coded human-readable lines to stdout/stderr |
 | `legacy` | Plain `console.log` passthrough |
 
-Log level is controlled by `MAX_LOG_LEVEL` (default: `info`).
+Log level is controlled by `HOOT_LOG_LEVEL` (default: `info`).
 
 ---
 
@@ -263,10 +263,10 @@ Log level is controlled by `MAX_LOG_LEVEL` (default: `info`).
 
 | Flag | Default | Effect |
 |------|---------|--------|
-| `MAX_QUEUE_V2=1` | off | Enable 3-lane concurrent priority queue |
-| `MAX_POOL_ENABLED=1` | off | Enable worker session pool |
-| `MAX_ENCRYPT_DB=1` | off | Enable XOR-obfuscated SQLite at rest |
-| `MAX_PLUGINS_ENABLED=1` | off | Load plugins from `~/.max/plugins/` |
-| `MAX_SELF_EDIT=1` | off | Allow Hoot to edit its own source files |
-| `MAX_LOG_FORMAT` | `json` | `json` \| `pretty` \| `legacy` |
-| `MAX_LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |
+| `HOOT_QUEUE_V2=1` | off | Enable 3-lane concurrent priority queue |
+| `HOOT_POOL_ENABLED=1` | off | Enable worker session pool |
+| `HOOT_ENCRYPT_DB=1` | off | Enable XOR-obfuscated SQLite at rest |
+| `HOOT_PLUGINS_ENABLED=1` | off | Load plugins from `~/.hoot/plugins/` |
+| `HOOT_SELF_EDIT=1` | off | Allow Hoot to edit its own source files |
+| `HOOT_LOG_FORMAT` | `json` | `json` \| `pretty` \| `legacy` |
+| `HOOT_LOG_LEVEL` | `info` | `debug` \| `info` \| `warn` \| `error` |

@@ -12,7 +12,7 @@ while [ $WAITED -lt $MAX_WAIT ]; do
 done
 
 # Clear stale session
-sqlite3 ~/.max/max.db "DELETE FROM max_state WHERE key='orchestrator_session_id';" 2>/dev/null
+sqlite3 ~/.hoot/hoot.db "DELETE FROM hoot_state WHERE key='orchestrator_session_id';" 2>/dev/null
 
 # Start Hoot
 cd ~/hoot && exec npx tsx src/daemon.ts

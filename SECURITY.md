@@ -35,9 +35,9 @@ We follow responsible disclosure. Reporters who follow this policy will be credi
 
 ## Security Features
 
-### Encryption at rest (`MAX_ENCRYPT_DB`)
+### Encryption at rest (`HOOT_ENCRYPT_DB`)
 
-When `MAX_ENCRYPT_DB=1` is set in `~/.max/.env` (Hoot config directory), the SQLite database (`~/.max/max.db`) is XOR-obfuscated using a key derived via **HKDF-SHA256** from the daemon's API token with the fixed salt `max-db-v1` (`src/store/migrate-encrypt.ts`). This makes the database unreadable by the standard `sqlite3` CLI or forensic tools without the key.
+When `HOOT_ENCRYPT_DB=1` is set in `~/.hoot/.env` (Hoot config directory), the SQLite database (`~/.hoot/hoot.db`) is XOR-obfuscated using a key derived via **HKDF-SHA256** from the daemon's API token with the fixed salt `max-db-v1` (`src/store/migrate-encrypt.ts`). This makes the database unreadable by the standard `sqlite3` CLI or forensic tools without the key.
 
 The encryption key is derived at migration time and never stored on disk separately from the token.
 
@@ -72,7 +72,7 @@ This restricts cross-origin requests to `null`-origin (local file pages and `fet
 
 ### Bearer token authentication (`src/api/server.ts`)
 
-A 32-byte cryptographically random token is generated on first startup and stored at `~/.max/api-token` with mode `0o600`. All API endpoints (except `/status` and `/metrics`) require:
+A 32-byte cryptographically random token is generated on first startup and stored at `~/.hoot/api-token` with mode `0o600`. All API endpoints (except `/status` and `/metrics`) require:
 
 ```
 Authorization: Bearer <token>
@@ -82,7 +82,7 @@ Requests without a valid token are rejected with `401 Unauthorized` and the even
 
 ### Token rotation (`src/api/server.ts`, FR-S.3)
 
-`POST /auth/rotate` (requires current token) generates a new 32-byte random token, persists it to `~/.max/api-token`, closes all active SSE connections, and notifies connected clients via an `auth_rotated` event.
+`POST /auth/rotate` (requires current token) generates a new 32-byte random token, persists it to `~/.hoot/api-token`, closes all active SSE connections, and notifies connected clients via an `auth_rotated` event.
 
 ### Worker directory blocking (`src/copilot/tools.ts`)
 
@@ -98,7 +98,7 @@ Any attempt to create a worker in these directories is rejected and recorded in 
 
 ### Telegram user ID whitelist (`src/telegram/bot.ts`, FR-9.3)
 
-The Telegram bot ignores all messages from users whose numeric Telegram ID does not match `AUTHORIZED_USER_ID` in `~/.max/.env`. Unauthorized messages are silently dropped and logged as `auth_reject` in the audit log. There is no error message sent back to the unknown user.
+The Telegram bot ignores all messages from users whose numeric Telegram ID does not match `AUTHORIZED_USER_ID` in `~/.hoot/.env`. Unauthorized messages are silently dropped and logged as `auth_reject` in the audit log. There is no error message sent back to the unknown user.
 
 ### Prompt length limit (FR-S.2)
 
@@ -106,7 +106,7 @@ Both the HTTP API (`POST /message`) and the Telegram bot reject prompts exceedin
 
 ### Skill path traversal guard (`src/copilot/skills.ts`)
 
-`createSkill` and `removeSkill` validate that the resolved skill directory path starts with the expected `~/.max/skills/` prefix before any filesystem operation, blocking path-traversal attacks via crafted skill slugs.
+`createSkill` and `removeSkill` validate that the resolved skill directory path starts with the expected `~/.hoot/skills/` prefix before any filesystem operation, blocking path-traversal attacks via crafted skill slugs.
 
 ---
 
@@ -114,20 +114,20 @@ Both the HTTP API (`POST /message`) and the Telegram bot reject prompts exceedin
 
 | Flag | Default | Security impact |
 |------|---------|-----------------|
-| `MAX_ENCRYPT_DB=1` | **off** | Enables XOR-obfuscation of `~/.max/max.db` |
-| `MAX_PLUGINS_ENABLED=1` | **off** | Loads arbitrary CommonJS modules from `~/.max/plugins/` |
-| `MAX_SELF_EDIT=1` | **off** | Allows Hoot to modify its own source files |
-| `MAX_POOL_ENABLED=1` | off | Worker sessions are pooled and reused |
+| `HOOT_ENCRYPT_DB=1` | **off** | Enables XOR-obfuscation of `~/.hoot/hoot.db` |
+| `HOOT_PLUGINS_ENABLED=1` | **off** | Loads arbitrary CommonJS modules from `~/.hoot/plugins/` |
+| `HOOT_SELF_EDIT=1` | **off** | Allows Hoot to modify its own source files |
+| `HOOT_POOL_ENABLED=1` | off | Worker sessions are pooled and reused |
 
-`MAX_PLUGINS_ENABLED` and `MAX_SELF_EDIT` increase the attack surface and should only be enabled when explicitly needed.
+`HOOT_PLUGINS_ENABLED` and `HOOT_SELF_EDIT` increase the attack surface and should only be enabled when explicitly needed.
 
 ---
 
 ## Known Limitations
 
-### Plaintext `~/.max/.env`
+### Plaintext `~/.hoot/.env`
 
-The `~/.max/.env` file is stored as plaintext and contains `TELEGRAM_BOT_TOKEN`, `AUTHORIZED_USER_ID`, and optionally `COPILOT_MODEL`. It is created with default filesystem permissions (typically `0o644`). On a shared machine this file is readable by other users in the same group. **Mitigation:** restrict permissions manually with `chmod 600 ~/.max/.env`.
+The `~/.hoot/.env` file is stored as plaintext and contains `TELEGRAM_BOT_TOKEN`, `AUTHORIZED_USER_ID`, and optionally `COPILOT_MODEL`. It is created with default filesystem permissions (typically `0o644`). On a shared machine this file is readable by other users in the same group. **Mitigation:** restrict permissions manually with `chmod 600 ~/.hoot/.env`.
 
 ### No TLS on the localhost API
 
@@ -135,8 +135,8 @@ The Express server binds to `127.0.0.1:7777` over plain HTTP. TLS is intentional
 
 ### Plugin sandbox
 
-Plugins loaded from `~/.max/plugins/` are executed as full Node.js modules in the daemon's process with no sandbox. A malicious or compromised plugin can read any file the daemon process can read, including `~/.max/api-token` and `~/.max/.env`. Only install plugins from sources you trust.
+Plugins loaded from `~/.hoot/plugins/` are executed as full Node.js modules in the daemon's process with no sandbox. A malicious or compromised plugin can read any file the daemon process can read, including `~/.hoot/api-token` and `~/.hoot/.env`. Only install plugins from sources you trust.
 
 ### XOR obfuscation is not encryption
 
-`MAX_ENCRYPT_DB=1` applies XOR obfuscation, not AES/SQLCipher encryption. It prevents casual inspection but does not provide cryptographic confidentiality against a determined adversary with the token file. If you need strong encryption at rest, use full-disk encryption (FileVault / LUKS) at the OS level.
+`HOOT_ENCRYPT_DB=1` applies XOR obfuscation, not AES/SQLCipher encryption. It prevents casual inspection but does not provide cryptographic confidentiality against a determined adversary with the token file. If you need strong encryption at rest, use full-disk encryption (FileVault / LUKS) at the OS level.

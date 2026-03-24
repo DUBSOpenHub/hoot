@@ -75,8 +75,8 @@ export class MetricsCollector {
     const lines: string[] = [];
     const uptimeSec = (Date.now() - this.startTime) / 1000;
 
-    this.gauges.set("max_uptime_seconds", [{ value: uptimeSec, labels: {} }]);
-    this.gauges.set("max_memory_rss_bytes", [{ value: process.memoryUsage().rss, labels: {} }]);
+    this.gauges.set("hoot_uptime_seconds", [{ value: uptimeSec, labels: {} }]);
+    this.gauges.set("hoot_memory_rss_bytes", [{ value: process.memoryUsage().rss, labels: {} }]);
 
     for (const [name, entries] of this.counters) {
       lines.push(`# TYPE ${name} counter`);
@@ -137,24 +137,24 @@ export function wireMetrics(bus: import("../bus/index.js").MessageBus): void {
   const m = getMetrics();
 
   bus.on("message.completed", (evt) => {
-    m.increment("max_messages_total", {
+    m.increment("hoot_messages_total", {
       tier: evt.tier ?? "unknown",
       channel: evt.channel,
     });
-    m.observe("max_response_duration_seconds", evt.durationMs, {
+    m.observe("hoot_response_duration_seconds", evt.durationMs, {
       tier: evt.tier ?? "unknown",
     });
   });
 
   bus.on("message.error", (evt) => {
-    m.increment("max_messages_errors_total", { channel: evt.channel });
+    m.increment("hoot_messages_errors_total", { channel: evt.channel });
   });
 
   bus.on("worker.completed", (_evt) => {
-    m.increment("max_worker_tasks_total", { status: "completed" });
+    m.increment("hoot_worker_tasks_total", { status: "completed" });
   });
 
   bus.on("worker.failed", (_evt) => {
-    m.increment("max_worker_tasks_total", { status: "failed" });
+    m.increment("hoot_worker_tasks_total", { status: "failed" });
   });
 }

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Max — Documentation</title>
-  <meta name="description" content="Documentation for Max, a personal AI assistant for developers built on the GitHub Copilot SDK. Installation, configuration, commands, skills, memory, and architecture.">
+  <title>Hoot — Documentation</title>
+  <meta name="description" content="Documentation for Hoot, a personal AI assistant for developers built on the GitHub Copilot SDK. Installation, configuration, commands, skills, memory, and architecture.">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
 
@@ -401,11 +401,11 @@
 <body>
 
 <nav>
-  <a href="index.html" class="wordmark">max</a>
+  <a href="index.html" class="wordmark">hoot 🦉</a>
   <ul class="nav-links">
     <li><a href="index.html">Home</a></li>
     <li><a href="docs.html" class="active">Docs</a></li>
-    <li><a href="https://github.com/burkeholland/max" class="ext">GitHub</a></li>
+    <li><a href="https://github.com/DUBSOpenHub/hoot" class="ext">GitHub</a></li>
     <li><a href="https://docs.github.com/en/copilot/how-tos/copilot-sdk/sdk-getting-started" class="ext">SDK Docs</a></li>
   </ul>
 </nav>
@@ -416,11 +416,11 @@
   <h4>Getting Started</h4>
   <a href="#installation">Installation</a>
   <a href="#setup">Setup</a>
-  <a href="#running">Running Max</a>
+  <a href="#running">Running Hoot</a>
 
-  <h4>Using Max</h4>
+  <h4>Using Hoot</h4>
   <a href="#commands">Commands</a>
-  <a href="#talking">Talking to Max</a>
+  <a href="#talking">Talking to Hoot</a>
   <a href="#workers">Worker Sessions</a>
 
   <h4>Features</h4>
@@ -441,7 +441,7 @@
 <main class="docs-content">
 
 <h1>Documentation<span>.</span></h1>
-<p class="subtitle">Everything you need to get Max running, configured, and doing useful things.</p>
+<p class="subtitle">Everything you need to get Hoot running, configured, and doing useful things.</p>
 
 <!-- ─────────────────── GETTING STARTED ─────────────────── -->
 
@@ -451,20 +451,20 @@
 <ul>
   <li><strong>Node.js v18+</strong> — <code>node --version</code></li>
   <li><strong>npm</strong> — comes with Node.js</li>
-  <li><strong>GitHub Copilot CLI</strong> — Max uses the Copilot SDK which requires an active Copilot subscription. Install with <code>npm install -g @github/copilot</code></li>
+  <li><strong>GitHub Copilot CLI</strong> — Hoot uses the Copilot SDK which requires an active Copilot subscription. Install with <code>npm install -g @github/copilot</code></li>
   <li><strong>gogcli</strong> (optional) — enables Gmail, Calendar, Drive skills. <code>brew install steipete/tap/gogcli</code></li>
 </ul>
 
 <h3>One-line install</h3>
 <div class="code-block">
   <div class="code-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="label">terminal</span></div>
-  <div class="code-body"><span class="prompt">$</span> <span class="cmd">curl -fsSL https://raw.githubusercontent.com/burkeholland/max/main/install.sh | bash</span></div>
+  <div class="code-body"><span class="prompt">$</span> <span class="cmd">curl -fsSL https://raw.githubusercontent.com/DUBSOpenHub/hoot/main/install.sh | bash</span></div>
 </div>
 
 <h3>Or install with npm</h3>
 <div class="code-block">
   <div class="code-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="label">terminal</span></div>
-  <div class="code-body"><span class="prompt">$</span> <span class="cmd">npm install -g heymax</span></div>
+  <div class="code-body"><span class="prompt">$</span> <span class="cmd">npm install -g hoot</span></div>
 </div>
 
 
@@ -474,7 +474,7 @@
 
 <div class="code-block">
   <div class="code-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="label">terminal</span></div>
-  <div class="code-body"><span class="prompt">$</span> <span class="cmd">max setup</span></div>
+  <div class="code-body"><span class="prompt">$</span> <span class="cmd">hoot setup</span></div>
 </div>
 
 <p>The wizard walks you through:</p>
@@ -484,26 +484,26 @@
 </ol>
 
 <div class="callout">
-  <p><strong>Telegram lockdown is required.</strong> If you choose to set up Telegram, Max will not proceed until you provide your user ID. This prevents unauthorized access to your machine through the bot.</p>
+  <p><strong>Telegram lockdown is required.</strong> If you choose to set up Telegram, Hoot will not proceed until you provide your user ID. This prevents unauthorized access to your machine through the bot.</p>
 </div>
 
-<p>Configuration is saved to <code>~/.max/.env</code>. You can re-run <code>max setup</code> anytime to reconfigure.</p>
+<p>Configuration is saved to <code>~/.hoot/.env</code>. You can re-run <code>hoot setup</code> anytime to reconfigure.</p>
 
 
-<h2 id="running">Running Max<span>.</span></h2>
+<h2 id="running">Running Hoot<span>.</span></h2>
 
 <table class="cmd-table">
   <thead><tr><th>Command</th><th>Description</th></tr></thead>
   <tbody>
-    <tr><td>max start</td><td>Start the Max daemon. Launches the orchestrator, HTTP API (port 7777), and Telegram bot (if configured).</td></tr>
-    <tr><td>max tui</td><td>Open the terminal UI. Connects to the running daemon via SSE for real-time streaming.</td></tr>
-    <tr><td>max setup</td><td>Run the interactive setup wizard.</td></tr>
-    <tr><td>max help</td><td>Show available commands.</td></tr>
-    <tr><td>max --version</td><td>Print the version number.</td></tr>
+    <tr><td>hoot start</td><td>Start the Hoot daemon. Launches the orchestrator, HTTP API (port 7777), and Telegram bot (if configured).</td></tr>
+    <tr><td>hoot tui</td><td>Open the terminal UI. Connects to the running daemon via SSE for real-time streaming.</td></tr>
+    <tr><td>hoot setup</td><td>Run the interactive setup wizard.</td></tr>
+    <tr><td>hoot help</td><td>Show available commands.</td></tr>
+    <tr><td>hoot --version</td><td>Print the version number.</td></tr>
   </tbody>
 </table>
 
-<p><strong>Typical workflow:</strong> Start the daemon in one terminal with <code>max start</code>, then open a second terminal and run <code>max tui</code> to chat. Or just message Max on Telegram from your phone.</p>
+<p><strong>Typical workflow:</strong> Start the daemon in one terminal with <code>hoot start</code>, then open a second terminal and run <code>hoot tui</code> to chat. Or just message Hoot on Telegram from your phone.</p>
 
 
 <!-- ─────────────────── USING MAX ─────────────────── -->
@@ -521,7 +521,7 @@
     <tr><td>/memory</td><td>Show all stored memories</td><td><span class="tag tag-tui">TUI</span> <span class="tag tag-tg">TG</span></td></tr>
     <tr><td>/skills</td><td>List installed skills</td><td><span class="tag tag-tui">TUI</span> <span class="tag tag-tg">TG</span></td></tr>
     <tr><td>/workers</td><td>List active worker sessions</td><td><span class="tag tag-tui">TUI</span> <span class="tag tag-tg">TG</span></td></tr>
-    <tr><td>/restart</td><td>Restart the Max daemon</td><td><span class="tag tag-tui">TUI</span> <span class="tag tag-tg">TG</span></td></tr>
+    <tr><td>/restart</td><td>Restart the Hoot daemon</td><td><span class="tag tag-tui">TUI</span> <span class="tag tag-tg">TG</span></td></tr>
     <tr><td>/status</td><td>Daemon health check</td><td><span class="tag tag-tui">TUI</span></td></tr>
     <tr><td>/clear</td><td>Clear the terminal screen</td><td><span class="tag tag-tui">TUI</span></td></tr>
     <tr><td>/quit</td><td>Exit the TUI</td><td><span class="tag tag-tui">TUI</span></td></tr>
@@ -535,41 +535,41 @@
 </div>
 
 
-<h2 id="talking">Talking to Max<span>.</span></h2>
+<h2 id="talking">Talking to Hoot<span>.</span></h2>
 
-<p>Anything that isn't a slash command gets sent to Max as a natural language message. Max decides how to handle it:</p>
+<p>Anything that isn't a slash command gets sent to Hoot as a natural language message. Hoot decides how to handle it:</p>
 
 <ul>
   <li><strong>Direct answer</strong> — simple questions, math, general knowledge</li>
-  <li><strong>Worker session</strong> — coding tasks, file operations, debugging (Max spins up a Copilot CLI)</li>
-  <li><strong>Skill usage</strong> — if Max has a skill for it (email, calendar, etc.), he follows the skill's instructions</li>
-  <li><strong>Skill learning</strong> — if Max doesn't know how, he researches available CLI tools and teaches himself</li>
+  <li><strong>Worker session</strong> — coding tasks, file operations, debugging (Hoot spins up a Copilot CLI)</li>
+  <li><strong>Skill usage</strong> — if Hoot has a skill for it (email, calendar, etc.), it follows the skill's instructions</li>
+  <li><strong>Skill learning</strong> — if Hoot doesn't know how, it researches available CLI tools and teaches itself</li>
 </ul>
 
-<p>Messages are tagged with their source channel — <code>[via telegram]</code> or <code>[via tui]</code> — so Max can adapt his response style. Telegram gets shorter responses; TUI gets more detail.</p>
+<p>Messages are tagged with their source channel — <code>[via telegram]</code> or <code>[via tui]</code> — so Hoot can adapt his response style. Telegram gets shorter responses; TUI gets more detail.</p>
 
 
 <h2 id="workers">Worker Sessions<span>.</span></h2>
 
-<p>Workers are the backbone of Max's coding ability. Each worker is a <strong>full Copilot CLI session</strong> running in a specific directory with full access to files, terminal, git, and tools.</p>
+<p>Workers are the backbone of Hoot's coding ability. Each worker is a <strong>full Copilot CLI session</strong> running in a specific directory with full access to files, terminal, git, and tools.</p>
 
 <ul>
-  <li>Workers run <strong>in the background</strong> — Max dispatches the task and returns immediately</li>
-  <li>When a worker finishes, Max receives the result and relays it to you</li>
+  <li>Workers run <strong>in the background</strong> — Hoot dispatches the task and returns immediately</li>
+  <li>When a worker finishes, Hoot receives the result and relays it to you</li>
   <li>Multiple workers can run <strong>simultaneously</strong></li>
-  <li>You can check on workers with <code>/workers</code> or ask Max "what's the status of the auth-fix session?"</li>
+  <li>You can check on workers with <code>/workers</code> or ask Hoot "what's the status of the auth-fix session?"</li>
 </ul>
 
-<p>You don't need to manage workers directly — just tell Max what you need done and where, and he handles the rest.</p>
+<p>You don't need to manage workers directly — just tell Hoot what you need done and where, and it handles the rest.</p>
 
 <div class="code-block">
   <div class="code-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="label">conversation</span></div>
   <div class="code-body"><span class="str">You:</span>  Fix the auth bug in ~/dev/myapp
-<span class="flag">Max:</span>  On it — I'll spin up a worker and let you know.
+<span class="flag">Hoot:/span>  On it — I'll spin up a worker and let you know.
 
 <span class="comment">  ...a few minutes later...</span>
 
-<span class="flag">Max:</span>  Auth bug is fixed. The token refresh wasn't catching
+<span class="flag">Hoot:/span>  Auth bug is fixed. The token refresh wasn't catching
       expired JWTs. Want me to push a PR?</div>
 </div>
 
@@ -578,13 +578,13 @@
 
 <h2 id="skills">Skills<span>.</span></h2>
 
-<p>Skills are markdown instruction files (<code>SKILL.md</code>) that teach Max how to use external tools. They're stored in <code>~/.max/skills/</code>.</p>
+<p>Skills are markdown instruction files (<code>SKILL.md</code>) that teach Hoot how to use external tools. They're stored in <code>~/.hoot/skills/</code>.</p>
 
 <h3>Using skills</h3>
-<p>Just ask Max to do something. If he has a skill for it, he'll use it automatically. Ask <em>"what skills do you have?"</em> or use <code>/skills</code> to see what's available.</p>
+<p>Just ask Hoot to do something. If he has a skill for it, he'll use it automatically. Ask <em>"what skills do you have?"</em> or use <code>/skills</code> to see what's available.</p>
 
 <h3>Learning new skills</h3>
-<p>When you ask Max to do something he doesn't know how to do, he'll:</p>
+<p>When you ask Hoot to do something he doesn't know how to do, he'll:</p>
 <ol>
   <li>Spin up a worker to research what CLI tools are available on your machine</li>
   <li>Figure out how to accomplish the task</li>
@@ -592,54 +592,54 @@
   <li>Do the task</li>
 </ol>
 
-<p>You can also explicitly teach Max: <em>"Learn how to use kubectl"</em> and he'll research it and create a skill.</p>
+<p>You can also explicitly teach Hoot: <em>"Learn how to use kubectl"</em> and it'll research it and create a skill.</p>
 
 <h3>Community skills</h3>
-<p>Max can discover and install skills from the open source community skill library. Just say <em>"find me a skill for X"</em>.</p>
+<p>Hoot can discover and install skills from the open source community skill library. Just say <em>"find me a skill for X"</em>.</p>
 
 <h3>Bundled skills</h3>
-<p>Max ships with the <strong>gogcli</strong> skill for Google services (Gmail, Calendar, Drive, Contacts, Tasks, Sheets) — requires <code>gogcli</code> to be installed.</p>
+<p>Hoot ships with the <strong>gogcli</strong> skill for Google services (Gmail, Calendar, Drive, Contacts, Tasks, Sheets) — requires <code>gogcli</code> to be installed.</p>
 
 
 <h2 id="memory">Memory<span>.</span></h2>
 
-<p>Max has a three-layer memory system:</p>
+<p>Hoot has a three-layer memory system:</p>
 
 <h3>Layer 1: Persistent session</h3>
-<p>Max maintains a single long-running orchestrator session using the Copilot SDK's <strong>infinite sessions</strong>. The SDK automatically compacts context in the background when it fills up, preserving important information. This means Max naturally remembers your conversation across messages — no manual history injection needed.</p>
+<p>Hoot maintains a single long-running orchestrator session using the Copilot SDK's <strong>infinite sessions</strong>. The SDK automatically compacts context in the background when it fills up, preserving important information. This means Hoot naturally remembers your conversation across messages — no manual history injection needed.</p>
 
 <h3>Layer 2: Long-term memory (SQLite)</h3>
-<p>For facts that should survive even a full session reset, Max has a <code>memories</code> table in SQLite. Things like your preferences, project context, people you work with, and routines. These are injected into Max's system prompt so he always has access.</p>
+<p>For facts that should survive even a full session reset, Hoot has a <code>memories</code> table in SQLite. Things like your preferences, project context, people you work with, and routines. These are injected into Hoot's system prompt so he always has access.</p>
 
-<p>Max saves memories two ways:</p>
+<p>Hoot saves memories two ways:</p>
 <ul>
   <li><strong>Explicitly</strong> — when you say "remember that I prefer TypeScript" or "remember that Sarah is my manager"</li>
-  <li><strong>Proactively</strong> — Max automatically saves important facts he picks up in conversation</li>
+  <li><strong>Proactively</strong> — Hoot automatically saves important facts it picks up in conversation</li>
 </ul>
 
 <p>Memory categories: <code>preference</code>, <code>fact</code>, <code>project</code>, <code>person</code>, <code>routine</code></p>
 
-<p>Use <code>/memory</code> to see everything Max has remembered. Ask Max to <em>"forget #42"</em> to remove a specific memory.</p>
+<p>Use <code>/memory</code> to see everything Hoot has remembered. Ask Hoot to <em>"forget #42"</em> to remove a specific memory.</p>
 
 <h3>Layer 3: Conversation log</h3>
-<p>All messages are logged to SQLite with their source channel (Telegram, TUI, background). This provides cross-channel awareness — if you tell Max something on Telegram, the TUI session knows about it too.</p>
+<p>All messages are logged to SQLite with their source channel (Telegram, TUI, background). This provides cross-channel awareness — if you tell Hoot something on Telegram, the TUI session knows about it too.</p>
 
 
 <h2 id="models">Models<span>.</span></h2>
 
-<p>Max can use any model available through your Copilot subscription. Switch models in two ways:</p>
+<p>Hoot can use any model available through your Copilot subscription. Switch models in two ways:</p>
 
 <ul>
   <li><strong>Slash command:</strong> <code>/model claude-sonnet-4.6</code></li>
-  <li><strong>Natural language:</strong> "Switch to GPT-4.1" — Max will use the <code>switch_model</code> tool</li>
+  <li><strong>Natural language:</strong> "Switch to GPT-4.1" — Hoot will use the <code>switch_model</code> tool</li>
 </ul>
 
-<p>Ask Max <em>"what models are available?"</em> to see the full list with billing multipliers. The model choice persists across restarts.</p>
+<p>Ask Hoot <em>"what models are available?"</em> to see the full list with billing multipliers. The model choice persists across restarts.</p>
 
 <p>Default model: <code>claude-sonnet-4.6</code></p>
 
 <div class="callout">
-  <p><strong>Note:</strong> Manually switching a model with <code>/model</code> disables auto mode — Max respects your explicit choice. Use <code>/auto</code> to re-enable automatic routing.</p>
+  <p><strong>Note:</strong> Manually switching a model with <code>/model</code> disables auto mode — Hoot respects your explicit choice. Use <code>/auto</code> to re-enable automatic routing.</p>
 </div>
 
 
@@ -647,7 +647,7 @@
 
 <h2 id="auto-mode">Auto Mode<span>.</span></h2>
 
-<p>Max has built-in automatic model routing that selects the best model for each message based on complexity. It's <strong>on by default</strong> — no configuration needed.</p>
+<p>Hoot has built-in automatic model routing that selects the best model for each message based on complexity. It's <strong>on by default</strong> — no configuration needed.</p>
 
 <h3>How it works</h3>
 
@@ -668,7 +668,7 @@
 
 <h3>Cooldown</h3>
 
-<p>To avoid rapid model switching, Max waits <strong>2 messages</strong> before switching tiers. Short follow-up responses like "yes", "do it", or "looks good" inherit the previous tier.</p>
+<p>To avoid rapid model switching, Hoot waits <strong>2 messages</strong> before switching tiers. Short follow-up responses like "yes", "do it", or "looks good" inherit the previous tier.</p>
 
 <h3>Toggling auto mode</h3>
 
@@ -688,7 +688,7 @@
 
 <h2 id="config">Environment Variables<span>.</span></h2>
 
-<p>Configuration lives in <code>~/.max/.env</code>. You can edit it directly or use <code>max setup</code>.</p>
+<p>Configuration lives in <code>~/.hoot/.env</code>. You can edit it directly or use <code>hoot setup</code>.</p>
 
 <table class="env-table">
   <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
@@ -703,18 +703,18 @@
 
 <h2 id="telegram">Telegram Setup<span>.</span></h2>
 
-<p>Telegram is optional but lets you talk to Max from your phone anywhere.</p>
+<p>Telegram is optional but lets you talk to Hoot from your phone anywhere.</p>
 
 <ol>
   <li>Open <a href="https://t.me/BotFather">@BotFather</a> on Telegram and send <code>/newbot</code></li>
   <li>Choose a name and username for your bot</li>
   <li>Copy the bot token</li>
   <li>Get your user ID from <a href="https://t.me/userinfobot">@userinfobot</a> — send it any message and it replies with your ID</li>
-  <li>Run <code>max setup</code> and enter both values when prompted</li>
+  <li>Run <code>hoot setup</code> and enter both values when prompted</li>
 </ol>
 
 <div class="callout warn">
-  <p><strong>Security:</strong> The <code>AUTHORIZED_USER_ID</code> is mandatory. Without it, anyone who finds your bot could control your machine. Max silently ignores messages from unauthorized users.</p>
+  <p><strong>Security:</strong> The <code>AUTHORIZED_USER_ID</code> is mandatory. Without it, anyone who finds your bot could control your machine. Hoot silently ignores messages from unauthorized users.</p>
 </div>
 
 <p>We also recommend disabling group joins: in @BotFather, go to <code>/mybots</code> → your bot → Bot Settings → Allow Groups → disable.</p>
@@ -724,23 +724,23 @@
 
 <h2 id="how-it-works">How It Works<span>.</span></h2>
 
-<p>Max is a Node.js daemon process built on the <a href="https://github.com/github/copilot-sdk">GitHub Copilot SDK</a>. Here's the architecture:</p>
+<p>Hoot is a Node.js daemon process built on the <a href="https://github.com/github/copilot-sdk">GitHub Copilot SDK</a>. Here's the architecture:</p>
 
 <ul>
-  <li><strong>Daemon</strong> (<code>max start</code>) — the main process. Starts the SDK client, orchestrator, HTTP API, and Telegram bot.</li>
+  <li><strong>Daemon</strong> (<code>hoot start</code>) — the main process. Starts the SDK client, orchestrator, HTTP API, and Telegram bot.</li>
   <li><strong>Orchestrator</strong> — a persistent Copilot session that receives all messages, decides what to do, and dispatches work. Runs in a single infinite session with automatic compaction.</li>
   <li><strong>Workers</strong> — full Copilot CLI sessions created on demand for coding tasks. Each runs in its own directory with full tool access.</li>
   <li><strong>HTTP API</strong> — Express server on port 7777. The TUI connects via SSE for streaming; slash commands hit REST endpoints.</li>
-  <li><strong>TUI</strong> (<code>max tui</code>) — a readline-based terminal interface that connects to the daemon's SSE stream.</li>
+  <li><strong>TUI</strong> (<code>hoot tui</code>) — a readline-based terminal interface that connects to the daemon's SSE stream.</li>
   <li><strong>Telegram Bot</strong> — Grammy-based bot that forwards messages to the orchestrator and relays responses.</li>
-  <li><strong>SQLite</strong> — stores worker state, conversation log, long-term memories, and daemon state at <code>~/.max/max.db</code>.</li>
+  <li><strong>SQLite</strong> — stores worker state, conversation log, long-term memories, and daemon state at <code>~/.hoot/hoot.db</code>.</li>
 </ul>
 
-<p>All data lives in <code>~/.max/</code>:</p>
+<p>All data lives in <code>~/.hoot/</code>:</p>
 <div class="code-block">
-  <div class="code-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="label">~/.max/</span></div>
+  <div class="code-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="label">~/.hoot/</span></div>
   <div class="code-body"><span class="cmd">.env</span>          <span class="comment"># configuration</span>
-<span class="cmd">max.db</span>        <span class="comment"># SQLite database</span>
+<span class="cmd">hoot.db</span>        <span class="comment"># SQLite database</span>
 <span class="cmd">sessions/</span>     <span class="comment"># Copilot SDK session state</span>
 <span class="cmd">skills/</span>       <span class="comment"># learned skills (SKILL.md files)</span></div>
 </div>
@@ -748,14 +748,14 @@
 
 <h2 id="copilot-sdk">Copilot SDK<span>.</span></h2>
 
-<p>Max is built on the <a href="https://github.com/github/copilot-sdk">GitHub Copilot SDK</a> (<code>@github/copilot-sdk</code>). Key SDK features Max uses:</p>
+<p>Hoot is built on the <a href="https://github.com/github/copilot-sdk">GitHub Copilot SDK</a> (<code>@github/copilot-sdk</code>). Key SDK features Hoot uses:</p>
 
 <ul>
-  <li><strong>Infinite sessions</strong> — automatic context compaction at 80% utilization, blocking at 95%. Max's orchestrator runs in a single persistent session that never runs out of context.</li>
-  <li><strong>Session resume</strong> — <code>resumeSession()</code> lets Max pick up where he left off after a restart, preserving conversation history.</li>
-  <li><strong>Tool system</strong> — Max's built-in tools (remember, recall, workers, model switching, etc.) are defined via <code>defineTool()</code> with Zod schemas.</li>
+  <li><strong>Infinite sessions</strong> — automatic context compaction at 80% utilization, blocking at 95%. Hoot's orchestrator runs in a single persistent session that never runs out of context.</li>
+  <li><strong>Session resume</strong> — <code>resumeSession()</code> lets Hoot pick up where it left off after a restart, preserving conversation history.</li>
+  <li><strong>Tool system</strong> — Hoot's built-in tools (remember, recall, workers, model switching, etc.) are defined via <code>defineTool()</code> with Zod schemas.</li>
   <li><strong>Streaming</strong> — real-time response streaming via <code>assistant.message_delta</code> events.</li>
-  <li><strong>MCP servers</strong> — Max can connect to MCP tool servers for extended capabilities.</li>
+  <li><strong>MCP servers</strong> — Hoot can connect to MCP tool servers for extended capabilities.</li>
   <li><strong>Skill directories</strong> — the SDK discovers and loads SKILL.md files from configured directories.</li>
   <li><strong>Model listing</strong> — <code>client.listModels()</code> returns all available models with capabilities and billing info.</li>
 </ul>
@@ -774,11 +774,11 @@
 </div>
 
 <footer>
-  <span>max v1.0 — built by <a href="https://postrboard.com">burke holland</a></span>
+  <span>hoot v1.0 — built by <a href="https://postrboard.com">burke holland</a></span>
   <span>
     <a href="https://github.com/github/copilot-sdk">copilot sdk</a> · 
     <a href="https://github.com/features/copilot/cli/">copilot cli</a> · 
-    <a href="https://github.com/burkeholland/max">source ↗</a>
+    <a href="https://github.com/DUBSOpenHub/hoot">source ↗</a>
   </span>
 </footer>
 
