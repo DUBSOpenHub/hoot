@@ -714,7 +714,7 @@ export default function Home() {
             Hoot builds, writes, researches, and automates {"\u2014"} powered
             by {skillCount} community superpowers from{" "}
             <a href="https://github.com/github/awesome-copilot" target="_blank" rel="noopener noreferrer"
-               style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px" }}>
+               style={{ color: "var(--accent3)", textDecoration: "underline", textUnderlineOffset: "3px", whiteSpace: "nowrap" }}>
               awesome-copilot
             </a>.
             {" "}Built by 109 AI agents across 10 models using the GitHub Copilot CLI.
