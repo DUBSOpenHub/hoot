@@ -394,8 +394,8 @@ Absolutely. Telegram is optional. The TUI and HTTP API work without it.
 **Can I add custom skills?**
 Yes — Hoot ships with every skill from [awesome-copilot](https://github.com/github/awesome-copilot) and syncs new ones daily. You can also create your own: drop a markdown file in `~/.hoot/skills/` or a TypeScript plugin in `~/.hoot/plugins/`.
 
-**Why is the config in `~/.hoot/`?**
-The config directory is now `~/.hoot/`. If you're upgrading from an older version that used `~/.max/`, Hoot automatically migrates your config, database, skills, and plugins on first run. No manual steps needed.
+**Why do some environment variables start with `HOOT_` and others don't?**
+The `HOOT_`-prefixed variables are Hoot-specific settings. A few internal variables still use a legacy `MAX_` prefix for backward compatibility — both prefixes work, but `HOOT_` is preferred for new config.
 
 **What is the Copilot SDK?**
 The [GitHub Copilot SDK](https://github.com/github/copilot-sdk) is a Node.js library that provides AI model access, session management, tool calling, and streaming. It's Hoot's default `AIProvider` backend. The `AIProvider` interface (`src/providers/types.ts`) lets you swap in any backend — implement `createSession()`, `sendAndWait()`, and `listModels()` and Hoot works with your provider instead.

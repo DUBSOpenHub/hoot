@@ -287,7 +287,7 @@
       letter-spacing: 0.04em;
     }
     .msg-who.you { color: var(--azure); }
-    .msg-who.max { color: var(--coral); }
+    .msg-who.hoot { color: var(--coral); }
     .msg-who.sys { color: var(--sage); }
     .msg-text {
       font-family: var(--sans);
@@ -760,7 +760,7 @@
       flex-shrink: 0;
     }
     .tui-who.you { color: var(--azure); }
-    .tui-who.max { color: var(--coral); }
+    .tui-who.hoot { color: var(--coral); }
     .tui-who.sys { color: var(--sage); }
     .tui-text {
       font-family: var(--sans);
@@ -885,27 +885,27 @@
 <body>
 
 <nav>
-  <a href="#" class="wordmark">max</a>
+  <a href="#" class="wordmark">hoot 🦉</a>
   <ul class="nav-links">
     <li><a href="#what">What</a></li>
     <li><a href="#skills">Skills</a></li>
     <li><a href="#install">Install</a></li>
     <li class="hide-mobile"><a href="docs.html">Docs</a></li>
-    <li><a href="https://github.com/burkeholland/max">GitHub</a></li>
+    <li><a href="https://github.com/DUBSOpenHub/hoot">GitHub</a></li>
     <li class="hide-mobile"><a href="https://docs.github.com/en/copilot/how-tos/copilot-sdk/sdk-getting-started" class="ext">SDK Docs</a></li>
   </ul>
 </nav>
 
 <section class="hero">
   <div class="hero-left">
-    <h1 class="hero-name">max<span class="dot">.</span></h1>
+    <h1 class="hero-name">hoot<span class="dot">.</span></h1>
     <p class="hero-subtitle">
       A personal AI assistant, built with developers in mind —<br>
       but capable of <em>anything</em>.
     </p>
     <div class="hero-cta">
-      <code onclick="navigator.clipboard.writeText('curl -fsSL https://raw.githubusercontent.com/burkeholland/max/main/install.sh | bash')">curl -fsSL ...install.sh | bash</code>
-      <code class="secondary" onclick="navigator.clipboard.writeText('npm install -g heymax')">npm i -g heymax</code>
+      <code onclick="navigator.clipboard.writeText('curl -fsSL https://raw.githubusercontent.com/DUBSOpenHub/hoot/main/install.sh | bash')">curl -fsSL ...install.sh | bash</code>
+      <code class="secondary" onclick="navigator.clipboard.writeText('npm install -g hoot')">npm i -g hoot</code>
     </div>
     <span class="hero-label">built on github copilot sdk</span>
   </div>
@@ -913,18 +913,18 @@
     <div class="tui-window">
       <div class="tui-titlebar">
         <span class="tui-status-dot"></span>
-        <span class="tui-title">max — via telegram</span>
+        <span class="tui-title">hoot — via telegram</span>
       </div>
       <div class="tui-body">
         <div class="tui-msg"><span class="tui-who you">you</span><span class="tui-text">Fix the auth bug in ~/dev/myapp</span></div>
-        <div class="tui-msg"><span class="tui-who max">max</span><span class="tui-text">On it — spinning up a worker now.</span></div>
+        <div class="tui-msg"><span class="tui-who hoot">hoot</span><span class="tui-text">On it — spinning up a worker now.</span></div>
         <div class="tui-msg"><span class="tui-who sys">sys</span><span class="tui-text"><code>[background]</code> auth-fix complete.</span></div>
-        <div class="tui-msg"><span class="tui-who max">max</span><span class="tui-text"><strong>Auth bug fixed.</strong> Expired JWT wasn't catching re-auth. Push a PR?</span></div>
+        <div class="tui-msg"><span class="tui-who hoot">hoot</span><span class="tui-text"><strong>Auth bug fixed.</strong> Expired JWT wasn't catching re-auth. Push a PR?</span></div>
         <div class="tui-divider"></div>
         <div class="tui-msg"><span class="tui-who you">you</span><span class="tui-text">Can you control my Kasa smart lights?</span></div>
-        <div class="tui-msg"><span class="tui-who max">max</span><span class="tui-text">Let me look into that... found <code>python-kasa</code> — it can control TP-Link smart devices.</span></div>
+        <div class="tui-msg"><span class="tui-who hoot">hoot</span><span class="tui-text">Let me look into that... found <code>python-kasa</code> — it can control TP-Link smart devices.</span></div>
         <div class="tui-msg"><span class="tui-who sys">sys</span><span class="tui-text">Skill <code>kasa-lights</code> created ✓</span></div>
-        <div class="tui-msg"><span class="tui-who max">max</span><span class="tui-text"><strong>Done.</strong> I can now control your lights. Want me to turn them off?</span></div>
+        <div class="tui-msg"><span class="tui-who hoot">hoot</span><span class="tui-text"><strong>Done.</strong> I can now control your lights. Want me to turn them off?</span></div>
       </div>
       <div class="tui-inputbar">
         <span class="tui-prompt">›</span>
@@ -1034,7 +1034,7 @@
       <rect x="340" y="20" width="730" height="480" rx="24" fill="none" stroke="rgba(17,24,39,0.08)" stroke-width="1.5"/>
 
       <!-- Max header -->
-      <text x="705" y="82" text-anchor="middle" font-family="Space Mono, monospace" font-size="40" font-weight="700" fill="#111827">max<tspan fill="#ff7f50">.</tspan></text>
+      <text x="705" y="82" text-anchor="middle" font-family="Space Mono, monospace" font-size="40" font-weight="700" fill="#111827"<>hoot<tspan fill="#ff7f50">.</tspan></text>
       <text x="705" y="118" text-anchor="middle" font-family="Space Mono, monospace" font-size="13" fill="rgba(17,24,39,0.22)" letter-spacing="0.16em">ORCHESTRATOR · MEMORY · SKILLS</text>
 
       <line x1="385" y1="142" x2="1025" y2="142" stroke="rgba(17,24,39,0.06)" stroke-width="1"/>
@@ -1132,8 +1132,8 @@
       <p>Intelligent model routing picks the best model for each message. Fast tier for greetings, standard for code, premium for deep analysis. On by default.</p>
     </div>
     <div class="tool-cell fade-in">
-      <h4>Self-Management <code>restart_max</code></h4>
-      <p>Max can restart himself. Spawns a replacement process and exits cleanly. Back online in seconds.</p>
+      <h4>Self-Management <code>restart_hoot</code></h4>
+      <p>Hoot can restart itself. Spawns a replacement process and exits cleanly. Back online in seconds.</p>
     </div>
   </div>
 </section>
@@ -1189,12 +1189,12 @@
     </div>
   </div>
 
-  <h2>Get Max.</h2>
+  <h2>Get Hoot.</h2>
   <div class="install-cmd"><span class="comment"># one line install</span></div>
-  <div class="install-cmd"><span class="prompt">$</span> <span class="cmd">curl -fsSL</span> <span class="url">https://raw.githubusercontent.com/burkeholland/max/main/install.sh</span> <span class="cmd">| bash</span></div>
+  <div class="install-cmd"><span class="prompt">$</span> <span class="cmd">curl -fsSL</span> <span class="url">https://raw.githubusercontent.com/DUBSOpenHub/hoot/main/install.sh</span> <span class="cmd">| bash</span></div>
   <div class="install-cmd">&nbsp;</div>
   <div class="install-cmd"><span class="comment"># or with npm</span></div>
-  <div class="install-cmd"><span class="prompt">$</span> <span class="cmd">npm install -g heymax</span></div>
+  <div class="install-cmd"><span class="prompt">$</span> <span class="cmd">npm install -g hoot</span></div>
 
   <div class="install-steps">
     <div class="install-step">
@@ -1205,22 +1205,22 @@
     <div class="install-step">
       <span class="step-num">02</span>
       <p>Setup</p>
-      <code>max setup</code>
+      <code>hoot setup</code>
     </div>
     <div class="install-step">
       <span class="step-num">03</span>
       <p>Go</p>
-      <code>max start</code>
+      <code>hoot start</code>
     </div>
   </div>
 </section>
 
 <footer>
-  <span>max v1.0 — built by <a href="https://postrboard.com">burke holland</a></span>
+  <span>hoot — built by <a href="https://postrboard.com">burke holland</a></span>
   <span>
     <a href="https://github.com/github/copilot-sdk">copilot sdk</a> · 
     <a href="https://github.com/features/copilot/cli/">copilot cli</a> · 
-    <a href="https://github.com/burkeholland/max">source ↗</a>
+    <a href="https://github.com/DUBSOpenHub/hoot">source ↗</a>
   </span>
 </footer>
 

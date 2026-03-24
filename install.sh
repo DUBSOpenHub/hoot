@@ -73,8 +73,18 @@ fi
 
 echo ""
 
+# Migrate ~/.max → ~/.hoot if needed
+if [ -d "$HOME/.max" ] && [ ! -d "$HOME/.hoot" ]; then
+  warn "  📦 Found legacy ~/.max/ config — migrating to ~/.hoot/"
+  cp -a "$HOME/.max" "$HOME/.hoot"
+  success "  ✓ Migrated ~/.max/ → ~/.hoot/"
+elif [ -d "$HOME/.max" ] && [ -d "$HOME/.hoot" ]; then
+  echo -e "  ${DIM}○ Legacy ~/.max/ found but ~/.hoot/ already exists — skipping migration${RESET}"
+fi
+
+echo ""
+
 if [ "$DEV_MODE" = true ]; then
-  # Dev mode: build locally and run setup from source
   info "Building from local source..."
   npm run build
   echo ""
