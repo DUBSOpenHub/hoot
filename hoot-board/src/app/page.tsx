@@ -739,6 +739,24 @@ export default function Home() {
             </a>
 
           </div>
+
+          <div className="ai-agent-banner" style={{
+            background: "linear-gradient(90deg, var(--accent1) 0%, var(--accent2) 100%)",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: "clamp(0.85rem, 2vw, 1.05rem)",
+            borderRadius: "1.2rem",
+            boxShadow: "0 4px 32px rgba(124,58,237,.13)",
+            padding: "0.8rem 1.8rem",
+            marginTop: "2rem",
+            maxWidth: 600,
+            letterSpacing: 0.01,
+            textAlign: "center",
+            border: "2px solid var(--accent3)",
+            zIndex: 2
+          }}>
+            Built by 109 AI agents across 10 models using the GitHub Copilot CLI. No hand-written code.
+          </div>
         </div>
 
         <div className="scroll-indicator" aria-hidden="true">
@@ -746,25 +764,6 @@ export default function Home() {
           <span>SCROLL</span>
         </div>
       </section>
-
-      {/* AI AGENT BANNER */}
-      <div className="ai-agent-banner reveal" style={{
-        background: "linear-gradient(90deg, var(--accent1) 0%, var(--accent2) 100%)",
-        color: "#fff",
-        fontWeight: 700,
-        fontSize: "1.15rem",
-        borderRadius: "1.2rem",
-        boxShadow: "0 4px 32px rgba(124,58,237,.13)",
-        padding: "1.1rem 2.2rem",
-        margin: "2.5rem auto 2.5rem auto",
-        maxWidth: 700,
-        letterSpacing: 0.01,
-        textAlign: "center",
-        border: "2px solid var(--accent3)",
-        zIndex: 2
-      }}>
-        Built by 109 AI agents across 10 models using the GitHub Copilot CLI. No hand-written code.
-      </div>
 
       {/* AGENT POWER BAR */}
       <section className="hoot-section" style={{ paddingTop: "4rem", paddingBottom: "4rem" }}>
