@@ -1,0 +1,5 @@
+1:"$Sreact.fragment"
+2:I[29065,["/hoot/_next/static/chunks/0gi-c_g6hzl-a.js"],"ViewportBoundary"]
+3:I[29065,["/hoot/_next/static/chunks/0gi-c_g6hzl-a.js"],"MetadataBoundary"]
+4:"$Sreact.suspense"
+0:{"rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]}],["$","div",null,{"hidden":true,"children":["$","$L3",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"Hoot 🦉 — The AI That Never Sleeps"}],["$","meta","1",{"name":"description","content":"Personal AI daemon that runs 24/7. Built by over 100 AI agents across 10 models using the GitHub Copilot CLI. No hand-written code."}]]}]}]}],null]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"05aCQZ2L7HN3pX0nWzAeL"}
