@@ -240,9 +240,9 @@ body::before {
 .hero-desc {
   font-size: 1.05rem;
   color: var(--subtle);
-  max-width: 560px;
+  max-width: 720px;
   margin: 0 auto 3rem;
-  line-height: 1.8;
+  line-height: 1.9;
 }
 
 .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
