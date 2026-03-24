@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Hoot 🦉 — The AI That Never Sleeps",
   description:
     "Personal AI daemon built by Gregg Cochran with the GitHub Copilot CLI and ~130 AI agents. No IDE. No hand-written code.",
+  icons: [],
 };
 
 export default function RootLayout({
