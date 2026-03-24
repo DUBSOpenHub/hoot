@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Hoot 🦉 — The AI That Never Sleeps",
   description:
-    "Personal AI daemon that runs 24/7. Built by over 100 AI agents across 10 models using the GitHub Copilot CLI. No hand-written code.",
+    "Personal AI daemon that runs 24/7. Built by Gregg Cochran with over 100 AI agents across 10 models using the GitHub Copilot CLI. No hand-written code.",
   icons: [],
 };
 
