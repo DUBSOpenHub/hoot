@@ -59,11 +59,11 @@ Hoot is like having a developer friend who never goes home. It runs on your comp
 
 ## 🧠 What Makes It Different
 
-Most AI tools are ephemeral — they forget you the moment the session ends. Hoot is a **daemon**: a persistent background process that runs 24/7 on your machine.
+Most AI tools are ephemeral — they forget you the moment the session ends. Hoot is a **background service** that starts on login and runs on your machine, keeping your context warm.
 
 | Capability | Hoot 🦉 |
 |-----------|---------|
-| Always-on daemon | ✅ Runs 24/7 in the background |
+| Background service | ✅ Starts on login, runs locally |
 | Long-term memory | ✅ Across 5 categories |
 | Multi-channel (mobile + terminal) | ✅ Telegram + TUI + HTTP |
 | Background agents | ✅ Up to 5 concurrent |
@@ -75,7 +75,7 @@ Most AI tools are ephemeral — they forget you the moment the session ends. Hoo
 
 - 🧠 **Ambient Awareness** — Hoot remembers what you asked 3 hours ago. Preferences, facts, projects, people, routines — all persisted in local SQLite.
 - ⚡ **Background Agency** — Say "refactor the auth module" from Telegram and walk away. Hoot spawns an agent, does the job, and notifies you when it's done.
-- 📱 **Channel Convergence** — Same brain serves Telegram (mobile), TUI (terminal), and HTTP API. One daemon, many interfaces, zero context loss.
+- 📱 **Channel Convergence** — Same brain serves Telegram (mobile), TUI (terminal), and HTTP API (loopback-only). One service, many interfaces, zero context loss.
 
 ---
 
@@ -105,13 +105,13 @@ copilot login
 
 > **What's the Copilot CLI?** It's the default AI backend Hoot ships with. Hoot's `AIProvider` interface supports pluggable backends — Copilot SDK is the default, but you can swap in Ollama, Anthropic, or OpenAI. For the default setup, you need an active [Copilot subscription](https://github.com/features/copilot/plans).
 
-### Step 4: Start the daemon
+### Step 4: Start the service
 
 ```bash
 hoot start
 ```
 
-> **What's a daemon?** A background process that keeps running even when you close the terminal. Like a server, but personal.
+> **How does it run?** Hoot starts as a background process on login via a macOS LaunchAgent. It binds to `127.0.0.1` (loopback only) and is never network-accessible. Restart it manually with `hoot start` if it stops.
 
 ### Step 5: Connect via TUI
 
@@ -154,8 +154,8 @@ You: Check on the auth-fix session
 
 | Command | Description |
 |---------|-------------|
-| `hoot start` | Start the daemon (background process) |
-| `hoot tui` | Connect to the daemon via terminal UI |
+| `hoot start` | Start the background service |
+| `hoot tui` | Connect to the service via terminal UI |
 | `hoot setup` | Interactive first-run configuration |
 | `hoot update` | Check for and install updates |
 | `hoot help` | Show available commands |
@@ -170,8 +170,8 @@ You: Check on the auth-fix session
 | `/skills` | List installed skills |
 | `/agents` | List active agent sessions |
 | `/copy` | Copy last response to clipboard |
-| `/status` | Daemon health check |
-| `/restart` | Restart the daemon |
+| `/status` | Service health check |
+| `/restart` | Restart the service |
 | `/cancel` | Cancel in-flight message |
 | `/clear` | Clear the screen |
 | `/quit` | Exit the TUI |
