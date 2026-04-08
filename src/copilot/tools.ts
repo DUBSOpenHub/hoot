@@ -11,7 +11,7 @@ import { readdirSync, readFileSync, statSync } from "fs";
 import { join, sep, resolve } from "path";
 import { homedir } from "os";
 import { listSkills, createSkill, removeSkill } from "./skills.js";
-import { config, persistModel } from "../config.js";
+import { config, persistModel, MAX_CONCURRENT_WORKERS } from "../config.js";
 import { SESSIONS_DIR } from "../paths.js";
 import { getCurrentSourceChannel } from "./orchestrator.js";
 import { getRouterConfig, updateRouterConfig } from "./router.js";
@@ -27,7 +27,7 @@ function formatWorkerError(workerName: string, startedAt: number, timeoutMs: num
   const msg = err instanceof Error ? err.message : String(err);
 
   if (isTimeoutError(err)) {
-    return `Worker '${workerName}' timed out after ${elapsed}s (limit: ${limit}s). The task was still running but had to be stopped. To allow more time, set WORKER_TIMEOUT=${timeoutMs * 2} in ~/.hoot/.env`;
+    return `Worker '${workerName}' timed out after ${elapsed}s (limit: ${limit}s). The task was still running but had to be stopped. To allow more time, set HOOT_WORKER_TIMEOUT_MS=${timeoutMs * 2} in ~/.hoot/.env`;
   }
   return `Worker '${workerName}' failed after ${elapsed}s: ${msg}`;
 }
@@ -36,8 +36,6 @@ const BLOCKED_WORKER_DIRS = [
   ".ssh", ".gnupg", ".aws", ".azure", ".config/gcloud",
   ".kube", ".docker", ".npmrc", ".pypirc",
 ];
-
-const MAX_CONCURRENT_WORKERS = 5;
 
 export interface WorkerInfo {
   name: string;

@@ -1,5 +1,5 @@
 import type { ChannelAdapter, ChannelRouter } from "./adapter.js";
-import { DEFAULT_WORKER_TIMEOUT_MS } from "../config.js";
+import { ENVELOPE_TTL_MS } from "../config.js";
 
 export class ChannelRouterImpl implements ChannelRouter {
   private readonly adapters = new Map<string, ChannelAdapter>();
@@ -15,7 +15,7 @@ export class ChannelRouterImpl implements ChannelRouter {
 
   trackEnvelope(envelopeId: string, channelName: string): void {
     this.envelopeMap.set(envelopeId, channelName);
-    setTimeout(() => this.envelopeMap.delete(envelopeId), DEFAULT_WORKER_TIMEOUT_MS).unref();
+    setTimeout(() => this.envelopeMap.delete(envelopeId), ENVELOPE_TTL_MS).unref();
   }
 
   deliverResponse(envelopeId: string, text: string, done: boolean): void {

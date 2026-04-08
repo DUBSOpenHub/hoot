@@ -22,6 +22,12 @@ class CopilotSessionWrapper implements AIProviderSession {
     });
   }
 
+  onToolStart(handler: (toolName: string) => void): void {
+    this.session.on("tool.execution_start", (ev: any) => {
+      handler(ev?.name || "");
+    });
+  }
+
   onToolComplete(handler: (toolName: string, result: string) => void): void {
     this.session.on("tool.execution_complete", (ev: any) => {
       handler(ev?.name || "", JSON.stringify(ev?.result || ""));

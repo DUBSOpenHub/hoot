@@ -1,4 +1,4 @@
-import { CIRCUIT_BREAKER_THRESHOLD, CIRCUIT_BREAKER_RESET_MS } from "../config.js";
+import { CIRCUIT_BREAKER_THRESHOLD, CIRCUIT_BREAKER_RESET_MS, CIRCUIT_BREAKER_MAX_RESET_MS } from "../config.js";
 
 export type BreakerState = "closed" | "open" | "half-open";
 
@@ -7,6 +7,7 @@ export interface CircuitBreakerOptions {
   failureThreshold?: number;
   windowMs?: number;
   resetTimeoutMs?: number;
+  maxResetTimeoutMs?: number;
 }
 
 export class BreakerOpenError extends Error {
@@ -25,15 +26,25 @@ export class CircuitBreaker {
   private failures = 0;
   private lastFailureAt?: number;
   private openedAt?: number;
+  private openCount = 0;
+  private _currentResetMs: number;
   private readonly failureThreshold: number;
   private readonly windowMs: number;
-  private readonly resetTimeoutMs: number;
+  private readonly baseResetMs: number;
+  private readonly maxResetMs: number;
 
   constructor(opts?: CircuitBreakerOptions) {
     this.name = opts?.name ?? 'default';
     this.failureThreshold = opts?.failureThreshold ?? CIRCUIT_BREAKER_THRESHOLD;
     this.windowMs = opts?.windowMs ?? 60_000;
-    this.resetTimeoutMs = opts?.resetTimeoutMs ?? CIRCUIT_BREAKER_RESET_MS;
+    this.baseResetMs = opts?.resetTimeoutMs ?? CIRCUIT_BREAKER_RESET_MS;
+    this.maxResetMs = opts?.maxResetTimeoutMs ?? CIRCUIT_BREAKER_MAX_RESET_MS;
+    this._currentResetMs = this.baseResetMs;
+  }
+
+  /** @deprecated Use baseResetMs — kept for backward compat in snapshot consumers */
+  get resetTimeoutMs(): number {
+    return this._currentResetMs;
   }
 
   get state(): BreakerState {
@@ -48,6 +59,8 @@ export class CircuitBreaker {
   reset(): void {
     this._state = 'closed';
     this.failures = 0;
+    this.openCount = 0;
+    this._currentResetMs = this.baseResetMs;
     this.lastFailureAt = undefined;
     this.openedAt = undefined;
   }
@@ -61,7 +74,7 @@ export class CircuitBreaker {
 
     if (this._state === "open") {
       const elapsed = Date.now() - (this.openedAt ?? 0);
-      const remaining = this.resetTimeoutMs - elapsed;
+      const remaining = this._currentResetMs - elapsed;
       throw new BreakerOpenError(this.name, Math.max(0, remaining));
     }
 
@@ -75,18 +88,28 @@ export class CircuitBreaker {
     }
   }
 
-  getSnapshot(): { state: BreakerState; failures: number; lastFailureAt?: number } {
+  getSnapshot(): { state: BreakerState; failures: number; lastFailureAt?: number; openCount: number; currentResetMs: number } {
     return {
       state: this._state,
       failures: this.failures,
       lastFailureAt: this.lastFailureAt,
+      openCount: this.openCount,
+      currentResetMs: this._currentResetMs,
     };
+  }
+
+  private computeResetMs(): number {
+    // First open uses base timeout; backoff starts on consecutive opens
+    if (this.openCount <= 1) return this.baseResetMs;
+    const exp = Math.min(this.maxResetMs, this.baseResetMs * (2 ** (this.openCount - 1)));
+    const jitter = Math.floor(Math.random() * 0.2 * exp);
+    return exp + jitter;
   }
 
   private tick(): void {
     if (this._state === "open") {
       const elapsed = Date.now() - (this.openedAt ?? 0);
-      if (elapsed >= this.resetTimeoutMs) {
+      if (elapsed >= this._currentResetMs) {
         this._state = "half-open";
       }
     }
@@ -101,6 +124,8 @@ export class CircuitBreaker {
     if (this._state === "half-open") {
       this._state = "closed";
       this.failures = 0;
+      this.openCount = 0;
+      this._currentResetMs = this.baseResetMs;
       this.lastFailureAt = undefined;
       this.openedAt = undefined;
     } else if (this._state === "closed") {
@@ -116,6 +141,8 @@ export class CircuitBreaker {
     if (this._state === "half-open" || this.failures >= this.failureThreshold) {
       this._state = "open";
       this.openedAt = Date.now();
+      this.openCount++;
+      this._currentResetMs = this.computeResetMs();
     }
   }
 }

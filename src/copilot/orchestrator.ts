@@ -310,13 +310,25 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
   let toolCallExecuted = false;
   let idleTimer: ReturnType<typeof setTimeout> | undefined;
   let maxTimer: ReturnType<typeof setTimeout> | undefined;
+  let toolHeartbeat: ReturnType<typeof setInterval> | undefined;
 
   function resetIdleTimer(reject: (reason: Error) => void): void {
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(
-      () => reject(new Error("Response idle timeout — no activity for 120s")),
+      () => reject(new Error(`Response idle timeout — no activity for ${RESPONSE_IDLE_TIMEOUT_MS / 1000}s`)),
       RESPONSE_IDLE_TIMEOUT_MS
     );
+  }
+
+  function startToolHeartbeat(reject: (reason: Error) => void): void {
+    if (toolHeartbeat) clearInterval(toolHeartbeat);
+    toolHeartbeat = setInterval(() => resetIdleTimer(reject), 30_000);
+    (toolHeartbeat as any).unref?.();
+  }
+
+  function stopToolHeartbeat(): void {
+    if (toolHeartbeat) clearInterval(toolHeartbeat);
+    toolHeartbeat = undefined;
   }
 
   session.onToolComplete(() => {
@@ -335,18 +347,24 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
     log.info("Sending to SDK", { promptLength: prompt.length });
 
     const timeoutPromise = new Promise<never>((_, reject) => {
-      // Idle timer: resets on every delta or tool-complete event
+      // Idle timer: resets on every delta, tool-start, or tool-complete event
       resetIdleTimer(reject);
       session.onDelta(() => {
+        stopToolHeartbeat();
+        resetIdleTimer(reject);
+      });
+      session.onToolStart?.(() => {
+        startToolHeartbeat(reject);
         resetIdleTimer(reject);
       });
       session.onToolComplete(() => {
+        stopToolHeartbeat();
         resetIdleTimer(reject);
       });
 
       // Max wall-clock timer: absolute safety cap (non-resettable)
       maxTimer = setTimeout(
-        () => reject(new Error("Response max timeout — exceeded 10 minute limit")),
+        () => reject(new Error(`Response max timeout — exceeded ${RESPONSE_MAX_TIMEOUT_MS / 1000}s limit`)),
         RESPONSE_MAX_TIMEOUT_MS
       );
     });
@@ -378,6 +396,7 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
   } finally {
     if (idleTimer) clearTimeout(idleTimer);
     if (maxTimer) clearTimeout(maxTimer);
+    stopToolHeartbeat();
     currentCallback = undefined;
   }
 }

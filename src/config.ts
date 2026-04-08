@@ -6,19 +6,50 @@ import { ENV_PATH, ensureHootHome } from "./paths.js";
 loadEnv({ path: ENV_PATH });
 loadEnv(); // also check cwd for backwards compat
 
+// Helper: parse env var as positive integer with fallback
+const envInt = (key: string, fallback: number): number => {
+  const v = process.env[key];
+  const n = Number(v);
+  return v !== undefined && Number.isFinite(n) && n > 0 ? n : fallback;
+};
+
+// Marathon mode: single toggle that cascades safe defaults for 24h tasks
+const marathon = (process.env.HOOT_MARATHON_MODE ?? "0") === "1";
+
 // Named defaults — import these instead of using magic numbers
 export const DEFAULT_API_PORT = 7777;
-export const DEFAULT_WORKER_TIMEOUT_MS = 600_000;
+export const DEFAULT_WORKER_TIMEOUT_MS = envInt(
+  "HOOT_WORKER_TIMEOUT_MS",
+  marathon ? 3_600_000 : 600_000
+);
 export const RATE_LIMIT_WINDOW_MS = 60_000;
 export const RATE_LIMIT_MAX_REQUESTS = 100;
 export const MAX_PROMPT_LENGTH = 50_000;
 export const POOL_MIN_WARM = 2;
 export const POOL_MAX_TOTAL = 5;
-export const POOL_SESSION_AGE_MS = 30 * 60 * 1000;
+export const POOL_SESSION_AGE_MS = envInt(
+  "HOOT_POOL_SESSION_AGE_MS",
+  marathon ? 21_600_000 : 30 * 60 * 1000
+);
 export const CIRCUIT_BREAKER_THRESHOLD = 3;
 export const CIRCUIT_BREAKER_RESET_MS = 30_000;
-export const RESPONSE_IDLE_TIMEOUT_MS = 120_000;
-export const RESPONSE_MAX_TIMEOUT_MS = 600_000;
+export const CIRCUIT_BREAKER_MAX_RESET_MS = envInt("HOOT_CB_MAX_RESET_MS", 900_000);
+export const RESPONSE_IDLE_TIMEOUT_MS = envInt(
+  "HOOT_RESPONSE_IDLE_TIMEOUT_MS",
+  marathon ? 1_800_000 : 120_000
+);
+export const RESPONSE_MAX_TIMEOUT_MS = envInt(
+  "HOOT_RESPONSE_MAX_TIMEOUT_MS",
+  marathon ? 7_200_000 : 600_000
+);
+export const MAX_CONCURRENT_WORKERS = envInt(
+  "HOOT_CONCURRENT_WORKERS",
+  marathon ? 3 : 5
+);
+export const ENVELOPE_TTL_MS = envInt(
+  "HOOT_ENVELOPE_TTL_MS",
+  marathon ? 172_800_000 : DEFAULT_WORKER_TIMEOUT_MS
+);
 
 const configSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().min(1).optional(),

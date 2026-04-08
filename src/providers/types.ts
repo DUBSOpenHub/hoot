@@ -7,6 +7,7 @@ export interface AIProviderSession {
   readonly id: string;
   sendAndWait(prompt: string, timeoutMs: number): Promise<string>;
   onDelta(handler: (text: string) => void): void;
+  onToolStart?(handler: (toolName: string) => void): void;
   onToolComplete(handler: (toolName: string, result: string) => void): void;
   abort(): Promise<void>;
   destroy(): Promise<void>;
