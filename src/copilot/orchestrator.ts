@@ -2,11 +2,35 @@ import { randomUUID } from "crypto";
 import type { AIProvider, AIProviderSession } from "../providers/types.js";
 import { createTools, type WorkerInfo } from "./tools.js";
 import { getOrchestratorSystemMessage } from "./system-message.js";
-import { config, DEFAULT_MODEL, featureFlags, CIRCUIT_BREAKER_THRESHOLD, CIRCUIT_BREAKER_RESET_MS, RESPONSE_IDLE_TIMEOUT_MS, RESPONSE_MAX_TIMEOUT_MS } from "../config.js";
+import {
+  config,
+  DEFAULT_MODEL,
+  featureFlags,
+  CIRCUIT_BREAKER_THRESHOLD,
+  CIRCUIT_BREAKER_RESET_MS,
+  RESPONSE_IDLE_TIMEOUT_MS,
+  RESPONSE_MAX_TIMEOUT_MS,
+} from "../config.js";
 import { loadMcpConfig } from "./mcp-config.js";
-import { getSkillDirectories } from "./skills.js";
+import * as skillsModule from "./skills.js";
+import { initializeSkillLoader, selectRelevantSkillDirectories } from "./skill-loader.js";
 import { resetClient } from "./client.js";
-import { logConversation, getState, setState, deleteState, getMemorySummary, getRecentConversation, getPendingCheckpoints, logAudit } from "../store/db.js";
+import {
+  logConversation,
+  getState,
+  setState,
+  deleteState,
+  getMemorySummary,
+  getRecentConversation,
+  getPendingCheckpoints,
+  deleteCheckpoint,
+  enqueueQueuedMessage,
+  claimQueuedMessage,
+  requeueQueuedMessage,
+  completeQueuedMessage,
+  clearQueuedMessages,
+  getQueuedMessageDepth,
+} from "../store/db.js";
 import { SESSIONS_DIR } from "../paths.js";
 import { resolveModel, type Tier, type RouteResult } from "./router.js";
 import { createBreaker } from "../resilience/circuit-breaker.js";
@@ -16,12 +40,23 @@ import type { QueuedLaneMessage } from "../queue/lane.js";
 
 const log = createLogger("orchestrator");
 
-const sdkOrchestratorBreaker = createBreaker({ name: "sdk.orchestrator", failureThreshold: CIRCUIT_BREAKER_THRESHOLD, windowMs: 60_000, resetTimeoutMs: CIRCUIT_BREAKER_RESET_MS });
-const sdkClientBreaker = createBreaker({ name: "sdk.client", failureThreshold: CIRCUIT_BREAKER_THRESHOLD, windowMs: 60_000, resetTimeoutMs: CIRCUIT_BREAKER_RESET_MS });
+const sdkOrchestratorBreaker = createBreaker({
+  name: "sdk.orchestrator",
+  failureThreshold: CIRCUIT_BREAKER_THRESHOLD,
+  windowMs: 60_000,
+  resetTimeoutMs: CIRCUIT_BREAKER_RESET_MS,
+});
+const sdkClientBreaker = createBreaker({
+  name: "sdk.client",
+  failureThreshold: CIRCUIT_BREAKER_THRESHOLD,
+  windowMs: 60_000,
+  resetTimeoutMs: CIRCUIT_BREAKER_RESET_MS,
+});
 
 const MAX_RETRIES = 3;
 const RECONNECT_DELAYS_MS = [1_000, 3_000, 10_000];
 const HEALTH_CHECK_INTERVAL_MS = 30_000;
+const OFFLINE_QUEUE_NOTICE = "I'm having trouble reaching the AI backend. Your messages are queued and I'll process them when I'm back online.";
 
 const ORCHESTRATOR_SESSION_KEY = "orchestrator_session_id";
 
@@ -60,6 +95,8 @@ export function getLastRouteResult(): RouteResult | undefined {
 
 let orchestratorSession: AIProviderSession | undefined;
 let sessionCreatePromise: Promise<AIProviderSession> | undefined;
+let activeSkillDirectories: string[] = [];
+let offlineDrainInProgress = false;
 
 type QueuedMessage = {
   prompt: string;
@@ -73,18 +110,28 @@ let processing = false;
 let currentCallback: MessageCallback | undefined;
 let currentSourceChannel: "telegram" | "tui" | undefined;
 
+// Test hook: when true, __test__.setSession has installed a manual session
+// that should be reused without attempting SDK client recovery or skill
+// reconfiguration. This is never enabled in production.
+let testSessionOverride = false;
+
 export function getCurrentSourceChannel(): "telegram" | "tui" | undefined {
   return currentSourceChannel;
 }
 
-function getSessionConfig() {
+function sameDirs(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((dir, idx) => dir === b[idx]);
+}
+
+function getSessionConfig(skillDirectoriesOverride?: string[]) {
   const tools = createTools({
     provider: copilotClient!,
     workers,
     onWorkerComplete: feedBackgroundResult,
   });
   const mcpServers = loadMcpConfig();
-  const skillDirectories = getSkillDirectories();
+  const skillDirectories = skillDirectoriesOverride ?? skillsModule.getSkillDirectories();
   return { tools, mcpServers, skillDirectories };
 }
 
@@ -92,15 +139,11 @@ export function feedBackgroundResult(workerName: string, result: string): void {
   const worker = workers.get(workerName);
   const channel = worker?.originChannel;
   const prompt = `[Background task completed] Worker '${workerName}' finished:\n\n${result}`;
-  sendToOrchestrator(
-    prompt,
-    { type: "background" },
-    (_text, done) => {
-      if (done && proactiveNotifyFn) {
-        proactiveNotifyFn(_text, channel);
-      }
+  void sendToOrchestrator(prompt, { type: "background" }, (_text, done) => {
+    if (done && proactiveNotifyFn) {
+      proactiveNotifyFn(_text, channel);
     }
-  );
+  });
 }
 
 function sleep(ms: number): Promise<void> {
@@ -112,15 +155,25 @@ async function ensureClient(): Promise<AIProvider> {
   if (copilotClient && copilotClient.getState() === "connected") {
     return copilotClient;
   }
+
   if (!resetPromise) {
     log.info("Client not connected, resetting", { state: copilotClient?.getState() ?? "null" });
-    resetPromise = resetClient().then((c) => {
-      log.info("Client reset successful", { state: c.getState() });
-      copilotClient = c;
-      return c;
-    }).finally(() => { resetPromise = undefined; });
+    resetPromise = sdkClientBreaker.execute(() => resetClient())
+      .then((client) => {
+        log.info("Client reset successful", { state: client.getState() });
+        copilotClient = client;
+        return client;
+      })
+      .finally(() => {
+        resetPromise = undefined;
+      });
   }
+
   return resetPromise;
+}
+
+function isBreakerOpen(): boolean {
+  return sdkOrchestratorBreaker.getState() === "open" || sdkClientBreaker.getState() === "open";
 }
 
 function startHealthCheck(): void {
@@ -134,30 +187,57 @@ function startHealthCheck(): void {
         await ensureClient();
         orchestratorSession = undefined;
         currentSessionModel = undefined;
+        activeSkillDirectories = [];
       }
+      await drainOfflineQueue();
     } catch (err) {
       log.error("Health check error", { err: err instanceof Error ? err.message : String(err) });
     }
   }, HEALTH_CHECK_INTERVAL_MS);
+  healthCheckTimer.unref?.();
 }
 
-async function ensureOrchestratorSession(): Promise<AIProviderSession> {
-  if (orchestratorSession) return orchestratorSession;
+async function ensureOrchestratorSession(promptForSkills?: string): Promise<AIProviderSession> {
+  // In test mode, when a manual session has been installed via __test__.setSession,
+  // always reuse it and avoid touching the SDK client or skill configuration.
+  if (orchestratorSession && testSessionOverride) {
+    return orchestratorSession;
+  }
+
+  const requestedSkillDirectories = promptForSkills
+    ? selectRelevantSkillDirectories(promptForSkills)
+    : skillsModule.getSkillDirectories();
+
+  if (orchestratorSession && sameDirs(activeSkillDirectories, requestedSkillDirectories)) {
+    return orchestratorSession;
+  }
+
+  if (orchestratorSession && !sameDirs(activeSkillDirectories, requestedSkillDirectories)) {
+    // Skill sets are part of the SDK session configuration. We can safely re-attach
+    // to the same persistent session ID with a different skillDirectories set.
+    try { await orchestratorSession.destroy(); } catch {}
+    orchestratorSession = undefined;
+    currentSessionModel = undefined;
+    activeSkillDirectories = [];
+    // Intentionally keep ORCHESTRATOR_SESSION_KEY so createOrResumeSession() can resume.
+  }
+
   if (sessionCreatePromise) return sessionCreatePromise;
 
-  sessionCreatePromise = createOrResumeSession();
+  sessionCreatePromise = createOrResumeSession(requestedSkillDirectories);
   try {
     const session = await sessionCreatePromise;
     orchestratorSession = session;
+    activeSkillDirectories = [...requestedSkillDirectories];
     return session;
   } finally {
     sessionCreatePromise = undefined;
   }
 }
 
-async function createOrResumeSession(): Promise<AIProviderSession> {
+async function createOrResumeSession(skillDirectoriesOverride: string[]): Promise<AIProviderSession> {
   const provider = await ensureClient();
-  const { tools, mcpServers, skillDirectories } = getSessionConfig();
+  const { tools, mcpServers, skillDirectories } = getSessionConfig(skillDirectoriesOverride);
   const memorySummary = getMemorySummary();
 
   const infiniteSessions = {
@@ -210,7 +290,7 @@ async function createOrResumeSession(): Promise<AIProviderSession> {
     try {
       await session.sendAndWait(
         `[System: Session recovered] Your previous session was lost. Here's the recent conversation for context — do NOT respond to these messages, just absorb the context silently:\n\n${recentHistory}\n\n(End of recovery context. Wait for the next real message.)`,
-        60_000
+        60_000,
       );
     } catch (err) {
       log.warn("Context recovery injection failed (non-fatal)", { err: err instanceof Error ? err.message : String(err) });
@@ -249,12 +329,13 @@ async function recoverWorkers(provider: AIProvider): Promise<void> {
         .then((result) => {
           worker.lastOutput = result || "No response";
           feedBackgroundResult(name, worker.lastOutput);
-        }).catch((err) => {
+        })
+        .catch((err) => {
           const msg = err instanceof Error ? err.message : String(err);
           worker.lastOutput = msg;
           feedBackgroundResult(name, `Worker '${name}' recovery failed: ${msg}`);
-        }).finally(() => {
-          const { deleteCheckpoint } = require("../store/db.js");
+        })
+        .finally(() => {
           deleteCheckpoint(name);
           session.destroy().catch(() => {});
           workers.delete(name);
@@ -270,12 +351,13 @@ async function recoverWorkers(provider: AIProvider): Promise<void> {
 
 export async function initOrchestrator(provider: AIProvider): Promise<void> {
   copilotClient = provider;
+  initializeSkillLoader();
   const { mcpServers, skillDirectories } = getSessionConfig();
 
   try {
     const models = await provider.listModels();
     const configured = config.copilotModel;
-    const isAvailable = models.some((m) => m.id === configured);
+    const isAvailable = models.some((model) => model.id === configured);
     if (!isAvailable) {
       log.warn("Configured model not available, falling back", { configured, fallback: DEFAULT_MODEL });
       config.copilotModel = DEFAULT_MODEL;
@@ -287,6 +369,7 @@ export async function initOrchestrator(provider: AIProvider): Promise<void> {
   log.info("MCP servers loaded", { count: Object.keys(mcpServers).length, servers: Object.keys(mcpServers).join(", ") || "(none)" });
   log.info("Skill directories", { dirs: skillDirectories.join(", ") || "(none)" });
   log.info("Persistent session mode — conversation history maintained by SDK");
+
   try {
     await recoverWorkers(provider);
   } catch (err) {
@@ -303,32 +386,29 @@ export async function initOrchestrator(provider: AIProvider): Promise<void> {
 }
 
 async function executeOnSession(prompt: string, callback: MessageCallback): Promise<string> {
-  const session = await ensureOrchestratorSession();
+  const session = await ensureOrchestratorSession(prompt);
   currentCallback = callback;
 
   let accumulated = "";
   let toolCallExecuted = false;
   let idleTimer: ReturnType<typeof setTimeout> | undefined;
   let maxTimer: ReturnType<typeof setTimeout> | undefined;
-  let toolHeartbeat: ReturnType<typeof setInterval> | undefined;
+  let hasActivity = false;
+  let toolActive = false;
 
-  function resetIdleTimer(reject: (reason: Error) => void): void {
+  function clearIdleTimer(): void {
     if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = undefined;
+  }
+
+  function startIdleTimer(reject: (reason: Error) => void): void {
+    // Only enforce idle timeout after we've seen some activity and no tool is running.
+    if (!hasActivity || toolActive) return;
+    clearIdleTimer();
     idleTimer = setTimeout(
       () => reject(new Error(`Response idle timeout — no activity for ${RESPONSE_IDLE_TIMEOUT_MS / 1000}s`)),
-      RESPONSE_IDLE_TIMEOUT_MS
+      RESPONSE_IDLE_TIMEOUT_MS,
     );
-  }
-
-  function startToolHeartbeat(reject: (reason: Error) => void): void {
-    if (toolHeartbeat) clearInterval(toolHeartbeat);
-    toolHeartbeat = setInterval(() => resetIdleTimer(reject), 30_000);
-    (toolHeartbeat as any).unref?.();
-  }
-
-  function stopToolHeartbeat(): void {
-    if (toolHeartbeat) clearInterval(toolHeartbeat);
-    toolHeartbeat = undefined;
   }
 
   session.onToolComplete(() => {
@@ -340,6 +420,8 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
     }
     toolCallExecuted = false;
     accumulated += deltaContent;
+    hasActivity = true;
+    toolActive = false;
     callback(accumulated, false);
   });
 
@@ -347,57 +429,86 @@ async function executeOnSession(prompt: string, callback: MessageCallback): Prom
     log.info("Sending to SDK", { promptLength: prompt.length });
 
     const timeoutPromise = new Promise<never>((_, reject) => {
-      // Idle timer: resets on every delta, tool-start, or tool-complete event
-      resetIdleTimer(reject);
       session.onDelta(() => {
-        stopToolHeartbeat();
-        resetIdleTimer(reject);
+        hasActivity = true;
+        toolActive = false;
+        startIdleTimer(reject);
       });
       session.onToolStart?.(() => {
-        startToolHeartbeat(reject);
-        resetIdleTimer(reject);
+        hasActivity = true;
+        toolActive = true;
+        clearIdleTimer();
       });
       session.onToolComplete(() => {
-        stopToolHeartbeat();
-        resetIdleTimer(reject);
+        toolActive = false;
+        startIdleTimer(reject);
       });
-
-      // Max wall-clock timer: absolute safety cap (non-resettable)
       maxTimer = setTimeout(
         () => reject(new Error(`Response max timeout — exceeded ${RESPONSE_MAX_TIMEOUT_MS / 1000}s limit`)),
-        RESPONSE_MAX_TIMEOUT_MS
+        RESPONSE_MAX_TIMEOUT_MS,
       );
     });
 
     const finalContent = await sdkOrchestratorBreaker.execute(() =>
-      Promise.race([session.sendAndWait(prompt, RESPONSE_MAX_TIMEOUT_MS), timeoutPromise])
+      Promise.race([session.sendAndWait(prompt, RESPONSE_MAX_TIMEOUT_MS), timeoutPromise]),
     );
-    log.info("SDK responded RAW", { 
-      type: typeof finalContent, 
-      value: typeof finalContent === 'string' ? finalContent.slice(0, 300) : String(finalContent),
-      length: typeof finalContent === 'string' ? finalContent.length : -1,
-      accumulatedLength: accumulated.length 
-    });
+
     return finalContent || accumulated || "(No response)";
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (/idle timeout/i.test(msg)) {
+    const isIdle = /idle timeout/i.test(msg);
+    const isMax = /max timeout/i.test(msg);
+    const isDead = /closed|destroy|disposed|invalid|expired|not found|stale/i.test(msg);
+
+    if (isIdle) {
       log.warn("Idle timeout — no activity detected", { idleMs: RESPONSE_IDLE_TIMEOUT_MS, accumulated: accumulated.length });
-    } else if (/max timeout/i.test(msg)) {
+    } else if (isMax) {
       log.warn("Max wall-clock timeout reached", { maxMs: RESPONSE_MAX_TIMEOUT_MS, accumulated: accumulated.length });
     }
-    if (/closed|destroy|disposed|invalid|expired|not found/i.test(msg)) {
+
+    if (isDead) {
       log.warn("Session appears dead, will recreate", { msg });
       orchestratorSession = undefined;
       currentSessionModel = undefined;
+      activeSkillDirectories = [];
       deleteState(ORCHESTRATOR_SESSION_KEY);
     }
+
     throw err;
   } finally {
     if (idleTimer) clearTimeout(idleTimer);
     if (maxTimer) clearTimeout(maxTimer);
-    stopToolHeartbeat();
     currentCallback = undefined;
+  }
+}
+
+async function executePromptWithRouting(
+  prompt: string,
+  callback: MessageCallback,
+  sourceChannel?: "telegram" | "tui",
+): Promise<string> {
+  currentSourceChannel = sourceChannel;
+  try {
+    const routeResult = await resolveModel(prompt, currentSessionModel || config.copilotModel, recentTiers, copilotClient);
+    if (routeResult.switched) {
+      log.info("Auto: model switch", { model: routeResult.model, reason: routeResult.overrideName || routeResult.tier });
+      config.copilotModel = routeResult.model;
+      try { await orchestratorSession?.destroy(); } catch {}
+      orchestratorSession = undefined;
+      currentSessionModel = undefined;
+      activeSkillDirectories = [];
+      deleteState(ORCHESTRATOR_SESSION_KEY);
+    }
+    if (routeResult.tier) {
+      recentTiers.push(routeResult.tier);
+      if (recentTiers.length > 5) recentTiers = recentTiers.slice(-5);
+    }
+    lastRouteResult = routeResult;
+    const result = await executeOnSession(prompt, callback);
+    await drainOfflineQueue();
+    return result;
+  } finally {
+    currentSourceChannel = undefined;
   }
 }
 
@@ -412,28 +523,12 @@ async function processQueue(): Promise<void> {
 
   while (messageQueue.length > 0) {
     const item = messageQueue.shift()!;
-    currentSourceChannel = item.sourceChannel;
     try {
-      const routeResult = await resolveModel(item.prompt, currentSessionModel || config.copilotModel, recentTiers, copilotClient);
-      if (routeResult.switched) {
-        log.info("Auto: model switch", { model: routeResult.model, reason: routeResult.overrideName || routeResult.tier });
-        config.copilotModel = routeResult.model;
-        orchestratorSession = undefined;
-        deleteState(ORCHESTRATOR_SESSION_KEY);
-      }
-      if (routeResult.tier) {
-        recentTiers.push(routeResult.tier);
-        if (recentTiers.length > 5) recentTiers = recentTiers.slice(-5);
-      }
-      lastRouteResult = routeResult;
-
-      const result = await executeOnSession(item.prompt, item.callback);
-      log.info("processQueue resolving", { resultLength: result?.length, first200: result?.slice(0, 200) });
+      const result = await executePromptWithRouting(item.prompt, item.callback, item.sourceChannel);
       item.resolve(result);
     } catch (err) {
       item.reject(err);
     }
-    currentSourceChannel = undefined;
   }
 
   processing = false;
@@ -444,14 +539,69 @@ function isRecoverableError(err: unknown): boolean {
   return /timeout|disconnect|connection|EPIPE|ECONNRESET|ECONNREFUSED|socket|closed|ENOENT|spawn|not found|expired|stale/i.test(msg);
 }
 
+function shouldQueueOffline(err?: unknown): boolean {
+  if (isBreakerOpen()) return true;
+  const msg = err instanceof Error ? err.message : String(err ?? "");
+  return /circuit open|temporarily unavailable/i.test(msg);
+}
+
+function queueMessageForOffline(taggedPrompt: string, sourceLabel: string, sourceChannel: "telegram" | "tui" | undefined, prompt: string): void {
+  enqueueQueuedMessage({
+    id: randomUUID(),
+    prompt: taggedPrompt,
+    sourceType: sourceLabel,
+    sourceChannel,
+  });
+  if (sourceLabel !== "background") {
+    try { logConversation("user", prompt, sourceLabel); } catch { /* best effort */ }
+  }
+}
+
+async function drainOfflineQueue(): Promise<void> {
+  if (offlineDrainInProgress || getQueuedMessageDepth() === 0 || isBreakerOpen()) return;
+
+  offlineDrainInProgress = true;
+  try {
+    while (!isBreakerOpen()) {
+      const queued = claimQueuedMessage();
+      if (!queued) break;
+      try {
+        const result = await executePromptWithRouting(queued.prompt, () => {}, queued.source_channel as "telegram" | "tui" | undefined);
+        completeQueuedMessage(queued.id);
+        try { logMessage("out", queued.source_type, result); } catch { /* best effort */ }
+        try { logConversation("assistant", result, queued.source_type); } catch { /* best effort */ }
+        proactiveNotifyFn?.(result, queued.source_channel as "telegram" | "tui" | undefined);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        requeueQueuedMessage(queued.id, msg);
+        if (!isRecoverableError(err)) {
+          proactiveNotifyFn?.(`Queued message failed: ${msg}`, queued.source_channel as "telegram" | "tui" | undefined);
+        }
+        break;
+      }
+    }
+  } finally {
+    offlineDrainInProgress = false;
+  }
+}
+
+export function getOfflineQueueDepth(): number {
+  return getQueuedMessageDepth();
+}
+
+export async function runInternalMessage(prompt: string): Promise<string> {
+  return executePromptWithRouting(prompt, () => {}, undefined);
+}
+
 export async function sendToOrchestrator(
   prompt: string,
   source: MessageSource,
-  callback: MessageCallback
+  callback: MessageCallback,
 ): Promise<void> {
   const sourceLabel =
-    source.type === "telegram" ? "telegram" :
-    source.type === "tui" ? "tui" : "background";
+    source.type === "telegram" ? "telegram"
+      : source.type === "tui" ? "tui"
+        : "background";
   logMessage("in", sourceLabel, prompt);
 
   const taggedPrompt = source.type === "background"
@@ -459,98 +609,99 @@ export async function sendToOrchestrator(
     : `[via ${sourceLabel}] ${prompt}`;
   const logRole = source.type === "background" ? "system" : "user";
   const sourceChannel: "telegram" | "tui" | undefined =
-    source.type === "telegram" ? "telegram" :
-    source.type === "tui" ? "tui" : undefined;
+    source.type === "telegram" ? "telegram"
+      : source.type === "tui" ? "tui"
+        : undefined;
 
   const correlationId = `msg-${Date.now()}`;
 
+  if (source.type !== "background" && shouldQueueOffline()) {
+    queueMessageForOffline(taggedPrompt, sourceLabel, sourceChannel, prompt);
+    callback(OFFLINE_QUEUE_NOTICE, true);
+    return;
+  }
+
   void (async () => {
     try {
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        const finalContent = await new Promise<string>((resolve, reject) => {
-          if (featureFlags.queueV2) {
-            const pq = getPriorityQueue();
-            pq.setExecutor(async (msg) => {
-              const route = await resolveModel(msg.envelope.text, currentSessionModel || config.copilotModel, recentTiers, copilotClient);
-              if (route.switched) {
-                log.info("Auto: model switch", { model: route.model, reason: route.overrideName || route.tier });
-                config.copilotModel = route.model;
-                orchestratorSession = undefined;
-                deleteState(ORCHESTRATOR_SESSION_KEY);
-              }
-              if (route.tier) {
-                recentTiers.push(route.tier);
-                if (recentTiers.length > 5) recentTiers = recentTiers.slice(-5);
-              }
-              lastRouteResult = route;
-              currentSourceChannel = msg.envelope.channel as "telegram" | "tui" | undefined;
-              const result = await executeOnSession(msg.envelope.text, msg.callback);
-              currentSourceChannel = undefined;
-              return result;
-            });
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        try {
+          const finalContent = await new Promise<string>((resolve, reject) => {
+            if (featureFlags.queueV2) {
+              const pq = getPriorityQueue();
+              pq.setExecutor(async (msg) => executePromptWithRouting(
+                msg.envelope.text,
+                msg.callback,
+                msg.envelope.channel as "telegram" | "tui" | undefined,
+              ));
 
-            void resolveModel(taggedPrompt, currentSessionModel || config.copilotModel, recentTiers, copilotClient)
-              .then((route) => {
-                const tier = route.tier ?? "standard";
-                const qMsg: QueuedLaneMessage = {
-                  envelope: {
-                    id: randomUUID(),
-                    channel: sourceChannel ?? "api",
-                    channelMeta: {},
-                    text: taggedPrompt,
+              void resolveModel(taggedPrompt, currentSessionModel || config.copilotModel, recentTiers, copilotClient)
+                .then((route) => {
+                  const tier = route.tier ?? "standard";
+                  const qMsg: QueuedLaneMessage = {
+                    envelope: {
+                      id: randomUUID(),
+                      channel: sourceChannel ?? "api",
+                      channelMeta: {},
+                      text: taggedPrompt,
+                      userId: sourceChannel,
+                      timestamp: Date.now(),
+                    },
+                    callback,
+                    resolve,
+                    reject,
                     userId: sourceChannel,
-                    timestamp: Date.now(),
-                  },
-                  callback,
-                  resolve,
-                  reject,
-                  userId: sourceChannel,
-                };
-                pq.enqueue(qMsg, tier);
-              }).catch(reject);
-          } else {
-            messageQueue.push({ prompt: taggedPrompt, callback, sourceChannel, resolve, reject });
-            processQueue();
-          }
-        });
-        log.info("Promise resolved in sendToOrchestrator", { finalContentLength: finalContent?.length, first200: finalContent?.slice(0, 200) });
-        callback(finalContent, true);
-        try { logMessage("out", sourceLabel, finalContent); } catch { /* best-effort */ }
-        try { logConversation(logRole, prompt, sourceLabel); } catch { /* best-effort */ }
-        try { logConversation("assistant", finalContent, sourceLabel); } catch { /* best-effort */ }
-        return;
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
+                  };
+                  pq.enqueue(qMsg, tier);
+                })
+                .catch(reject);
+            } else {
+              messageQueue.push({ prompt: taggedPrompt, callback, sourceChannel, resolve, reject });
+              void processQueue();
+            }
+          });
 
-        if (/cancelled|abort/i.test(msg)) {
+          callback(finalContent, true);
+          try { logMessage("out", sourceLabel, finalContent); } catch { /* best effort */ }
+          try { logConversation(logRole, prompt, sourceLabel); } catch { /* best effort */ }
+          try { logConversation("assistant", finalContent, sourceLabel); } catch { /* best effort */ }
+          return;
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+
+          if (/cancelled|abort/i.test(msg)) {
+            return;
+          }
+
+          if (isRecoverableError(err) && attempt < MAX_RETRIES) {
+            const delay = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
+            log.warn("Recoverable error, retrying", { msg, attempt: attempt + 1, maxRetries: MAX_RETRIES, delay, correlationId });
+            await sleep(delay);
+            try { await ensureClient(); } catch { /* will retry */ }
+            continue;
+          }
+
+          if (source.type !== "background" && shouldQueueOffline(err)) {
+            queueMessageForOffline(taggedPrompt, sourceLabel, sourceChannel, prompt);
+            callback(OFFLINE_QUEUE_NOTICE, true);
+            return;
+          }
+
+          log.error("Error processing message", { msg, correlationId });
+          const userMsg = /idle timeout/i.test(msg)
+            ? "⏱️ No activity detected for 2 minutes — the request may be stuck. Try again, or ask me something simpler!"
+            : /max timeout/i.test(msg)
+              ? "⏱️ That request hit the 10-minute safety limit. Try breaking it into smaller steps!"
+              : /timed out/i.test(msg)
+                ? "⏱️ That request timed out. This usually means a tool or service I tried to reach isn't connected yet. Try a simpler question, or ask me what I can do!"
+                : `Error: ${msg}`;
+          callback(userMsg, true);
           return;
         }
-
-        if (isRecoverableError(err) && attempt < MAX_RETRIES) {
-          const delay = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
-          log.warn("Recoverable error, retrying", { msg, attempt: attempt + 1, maxRetries: MAX_RETRIES, delay, correlationId });
-          await sleep(delay);
-          try { await ensureClient(); } catch { /* will retry */ }
-          continue;
-        }
-
-        log.error("Error processing message", { msg, correlationId });
-        const userMsg = /idle timeout/i.test(msg)
-          ? "⏱️ No activity detected for 2 minutes — the request may be stuck. Try again, or ask me something simpler!"
-          : /max timeout/i.test(msg)
-          ? "⏱️ That request hit the 10-minute safety limit. Try breaking it into smaller steps!"
-          : /timed out/i.test(msg)
-          ? "⏱️ That request timed out. This usually means a tool or service I tried to reach isn't connected yet. Try a simpler question, or ask me what I can do!"
-          : `Error: ${msg}`;
-        callback(userMsg, true);
-        return;
       }
-    }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       log.error("Unhandled error in message pipeline", { error: msg, correlationId, source: sourceLabel });
-      try { callback(`Error: ${msg}`, true); } catch { /* best-effort */ }
+      try { callback(`Error: ${msg}`, true); } catch { /* best effort */ }
     }
   })();
 }
@@ -561,6 +712,7 @@ export async function cancelCurrentMessage(): Promise<boolean> {
     const item = messageQueue.shift()!;
     item.reject(new Error("Cancelled"));
   }
+  const clearedOffline = clearQueuedMessages();
 
   if (orchestratorSession && currentCallback) {
     try {
@@ -572,9 +724,40 @@ export async function cancelCurrentMessage(): Promise<boolean> {
     }
   }
 
-  return drained > 0;
+  return drained + clearedOffline > 0;
 }
 
 export function getWorkers(): Map<string, WorkerInfo> {
   return workers;
 }
+
+export const __test__ = {
+  executeOnSession,
+  runInternalMessage,
+  setProvider(provider: AIProvider | undefined) {
+    copilotClient = provider;
+  },
+  setSession(session: AIProviderSession | undefined, model = config.copilotModel, skillDirectories: string[] = skillsModule.getSkillDirectories()) {
+    orchestratorSession = session;
+    currentSessionModel = session ? model : undefined;
+    activeSkillDirectories = session ? [...skillDirectories] : [];
+    testSessionOverride = !!session;
+  },
+  getQueueDepth() {
+    return messageQueue.length;
+  },
+  resetState() {
+    orchestratorSession = undefined;
+    sessionCreatePromise = undefined;
+    currentSessionModel = undefined;
+    recentTiers = [];
+    lastRouteResult = undefined;
+    activeSkillDirectories = [];
+    currentCallback = undefined;
+    currentSourceChannel = undefined;
+    processing = false;
+    messageQueue.length = 0;
+    copilotClient = undefined;
+    testSessionOverride = false;
+  },
+};
