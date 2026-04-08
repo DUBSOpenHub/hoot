@@ -2,7 +2,7 @@ import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { randomBytes } from "crypto";
-import { sendToOrchestrator, getWorkers, cancelCurrentMessage, getLastRouteResult } from "../copilot/orchestrator.js";
+import { sendToOrchestrator, getWorkers, cancelCurrentMessage, getLastRouteResult, getOfflineQueueDepth } from "../copilot/orchestrator.js";
 import { sendPhoto } from "../telegram/bot.js";
 import { config, persistModel, RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX_REQUESTS, MAX_PROMPT_LENGTH } from "../config.js";
 import { getRouterConfig, updateRouterConfig } from "../copilot/router.js";
@@ -97,6 +97,7 @@ app.get("/status", (_req: Request, res: Response) => {
       workingDir: w.workingDir,
       status: w.status,
     })),
+    queueDepth: getOfflineQueueDepth(),
     circuitBreakers: breakers,
   });
 });

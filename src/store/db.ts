@@ -142,6 +142,76 @@ export function getDb(): Database.Database {
       )
     `);
 
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS queued_messages (
+        id              TEXT PRIMARY KEY,
+        prompt          TEXT NOT NULL,
+        source_type     TEXT NOT NULL,
+        source_channel  TEXT,
+        status          TEXT NOT NULL DEFAULT 'queued'
+                        CHECK(status IN ('queued', 'processing')),
+        attempts        INTEGER NOT NULL DEFAULT 0,
+        available_at    INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+        last_error      TEXT,
+        created_at      INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+        updated_at      INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+      )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_queued_messages_status_available ON queued_messages(status, available_at, created_at)`);
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS jobs (
+        id            TEXT PRIMARY KEY,
+        kind          TEXT NOT NULL DEFAULT 'marathon',
+        prompt        TEXT NOT NULL,
+        step_count    INTEGER NOT NULL,
+        status        TEXT NOT NULL DEFAULT 'pending'
+                      CHECK(status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
+        current_step  INTEGER NOT NULL DEFAULT 0,
+        result        TEXT,
+        error         TEXT,
+        created_at    INTEGER NOT NULL,
+        updated_at    INTEGER NOT NULL,
+        started_at    INTEGER,
+        finished_at   INTEGER
+      )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_jobs_status_created ON jobs(status, created_at)`);
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS job_steps (
+        id            TEXT PRIMARY KEY,
+        job_id        TEXT NOT NULL,
+        step_index    INTEGER NOT NULL,
+        prompt        TEXT NOT NULL,
+        status        TEXT NOT NULL DEFAULT 'pending'
+                      CHECK(status IN ('pending', 'running', 'completed', 'failed', 'cancelled')),
+        output        TEXT,
+        error         TEXT,
+        created_at    INTEGER NOT NULL,
+        updated_at    INTEGER NOT NULL,
+        started_at    INTEGER,
+        finished_at   INTEGER,
+        FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+        UNIQUE(job_id, step_index)
+      )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_job_steps_job_status ON job_steps(job_id, status, step_index)`);
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS job_events (
+        id            TEXT PRIMARY KEY,
+        job_id        TEXT NOT NULL,
+        event_type    TEXT NOT NULL,
+        payload       TEXT,
+        created_at    INTEGER NOT NULL,
+        FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE
+      )
+    `);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_job_events_job_created ON job_events(job_id, created_at)`);
+
+
     try {
       db.prepare(`INSERT INTO conversation_log (role, content, source) VALUES ('system', '__migration_test__', 'test')`).run();
       db.prepare(`DELETE FROM conversation_log WHERE content = '__migration_test__'`).run();
@@ -372,6 +442,79 @@ export function getPendingCheckpoints(): WorkerCheckpoint[] {
     `SELECT correlation_id, name, working_dir, prompt, started_at, origin_channel
      FROM worker_checkpoints WHERE status = 'running'`
   ).all() as WorkerCheckpoint[];
+}
+
+export interface QueuedMessageRecord {
+  id: string;
+  prompt: string;
+  source_type: string;
+  source_channel: string | null;
+  attempts: number;
+  created_at: number;
+}
+
+export function enqueueQueuedMessage(msg: {
+  id: string;
+  prompt: string;
+  sourceType: string;
+  sourceChannel?: string;
+}): void {
+  const db = getDb();
+  const ts = Date.now();
+  db.prepare(
+    `INSERT OR REPLACE INTO queued_messages
+     (id, prompt, source_type, source_channel, status, attempts, available_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, 'queued', COALESCE((SELECT attempts FROM queued_messages WHERE id = ?), 0), ?, ?, ?)`
+  ).run(msg.id, msg.prompt, msg.sourceType, msg.sourceChannel ?? null, msg.id, ts, ts, ts);
+}
+
+export function claimQueuedMessage(): QueuedMessageRecord | undefined {
+  const db = getDb();
+  const ts = Date.now();
+  const row = db.prepare(
+    `SELECT id, prompt, source_type, source_channel, attempts, created_at
+     FROM queued_messages
+     WHERE status = 'queued' AND available_at <= ?
+     ORDER BY created_at ASC
+     LIMIT 1`
+  ).get(ts) as QueuedMessageRecord | undefined;
+
+  if (!row) return undefined;
+
+  db.prepare(
+    `UPDATE queued_messages
+     SET status = 'processing', attempts = attempts + 1, updated_at = ?
+     WHERE id = ?`
+  ).run(ts, row.id);
+
+  return { ...row, attempts: row.attempts + 1 };
+}
+
+export function requeueQueuedMessage(id: string, err?: string, delayMs = 30_000): void {
+  const db = getDb();
+  const ts = Date.now();
+  db.prepare(
+    `UPDATE queued_messages
+     SET status = 'queued', last_error = ?, available_at = ?, updated_at = ?
+     WHERE id = ?`
+  ).run(err ?? null, ts + delayMs, ts, id);
+}
+
+export function completeQueuedMessage(id: string): void {
+  const db = getDb();
+  db.prepare(`DELETE FROM queued_messages WHERE id = ?`).run(id);
+}
+
+export function clearQueuedMessages(): number {
+  const db = getDb();
+  const result = db.prepare(`DELETE FROM queued_messages`).run();
+  return result.changes;
+}
+
+export function getQueuedMessageDepth(): number {
+  const db = getDb();
+  const row = db.prepare(`SELECT COUNT(*) AS count FROM queued_messages`).get() as { count: number };
+  return row.count;
 }
 
 export function writeAuditLog(opts: {

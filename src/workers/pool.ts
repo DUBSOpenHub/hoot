@@ -1,133 +1,105 @@
 import { POOL_MIN_WARM, POOL_MAX_TOTAL, POOL_SESSION_AGE_MS } from "../config.js";
 import { createLogger } from "../observability/logger.js";
+import type { AIProviderSession, AIProvider } from "../providers/types.js";
+import { config } from "../config.js";
+import { SESSIONS_DIR } from "../paths.js";
 
 const log = createLogger("pool");
 
-export interface LegacyPoolConfig {
+export interface WorkerPoolOptions<TSession extends { id: string; close?: () => void } = { id: string; close?: () => void }> {
   minWarm?: number;
   maxTotal?: number;
-  maxSessionAgeMs?: number;
-  model?: string;
+  /** Max age before a session is recycled (ms). */
+  maxSessionAge?: number;
+  /** Factory for creating a fresh warm session. */
+  createSession?: (workingDir?: string) => Promise<TSession>;
 }
 
-export interface PooledSession {
-  session: any;
-  status: "warm" | "checked-out";
+interface PoolEntry<TSession extends { id: string; close?: () => void }> {
+  session: TSession;
   createdAt: number;
+  available: boolean;
   workingDir?: string;
 }
 
-export interface WorkerPoolOptions {
-  minWarm?: number;
-  maxTotal?: number;
-  createSession: () => Promise<{ id: string; close?: () => void }>;
-  maxSessionAge?: number;
-}
+const CHECKOUT_TIMEOUT_MS = 120_000;
 
-interface PoolEntry {
-  session: { id: string; close?: () => void };
-  createdAt: number;
-  available: boolean;
-}
-
-type AnyPoolOpts = (LegacyPoolConfig & { createSession?: undefined }) | WorkerPoolOptions;
-
-function isNewMode(opts: AnyPoolOpts | undefined): opts is WorkerPoolOptions {
-  return !!(opts && typeof (opts as WorkerPoolOptions).createSession === "function");
-}
-
-export class WorkerPool {
+export class WorkerPool<TSession extends { id: string; close?: () => void } = { id: string; close?: () => void }> {
   readonly minWarm: number;
   readonly maxTotal: number;
-  private readonly _newMode: boolean;
 
-  private readonly _legacyCfg: Required<LegacyPoolConfig>;
-  private _legacySessions: PooledSession[] = [];
-  private _legacyClient?: { createSession: (opts: any) => Promise<any> };
-  private _replenishTimer?: ReturnType<typeof setInterval>;
-
-  private readonly _createSession?: () => Promise<{ id: string; close?: () => void }>;
   private readonly _maxSessionAge: number;
-  private _entries: PoolEntry[] = [];
-  private _waiters: Array<(s: { id: string; close?: () => void }) => void> = [];
+  private _createSession?: (workingDir?: string) => Promise<TSession>;
 
-  constructor(opts?: AnyPoolOpts) {
-    this._newMode = isNewMode(opts);
+  private _entries: Array<PoolEntry<TSession>> = [];
+  private _waiters: Array<(s: TSession) => void> = [];
+  private _started = false;
 
-    if (this._newMode) {
-      const o = opts as WorkerPoolOptions;
-      this.minWarm = o.minWarm ?? POOL_MIN_WARM;
-      this.maxTotal = o.maxTotal ?? POOL_MAX_TOTAL;
-      this._createSession = o.createSession;
-      this._maxSessionAge = o.maxSessionAge ?? POOL_SESSION_AGE_MS;
-      this._legacyCfg = { minWarm: this.minWarm, maxTotal: this.maxTotal, maxSessionAgeMs: this._maxSessionAge, model: "default" };
-    } else {
-      const o = (opts ?? {}) as LegacyPoolConfig;
-      this.minWarm = o.minWarm ?? POOL_MIN_WARM;
-      this.maxTotal = o.maxTotal ?? POOL_MAX_TOTAL;
-      this._maxSessionAge = o.maxSessionAgeMs ?? 1_800_000;
-      this._legacyCfg = { minWarm: this.minWarm, maxTotal: this.maxTotal, maxSessionAgeMs: this._maxSessionAge, model: o.model ?? "default" };
-    }
+  constructor(opts?: WorkerPoolOptions<TSession>) {
+    this.minWarm = opts?.minWarm ?? POOL_MIN_WARM;
+    this.maxTotal = opts?.maxTotal ?? POOL_MAX_TOTAL;
+    this._maxSessionAge = opts?.maxSessionAge ?? POOL_SESSION_AGE_MS;
+    this._createSession = opts?.createSession;
   }
 
-  async start(client: { createSession: (opts: any) => Promise<any> }): Promise<void> {
-    this._legacyClient = client;
-    await this._legacyReplenish();
-    this._replenishTimer = setInterval(() => {
-      this._legacyReplenish().catch(() => {});
-    }, 30_000);
-    if ((this._replenishTimer as any).unref) (this._replenishTimer as any).unref();
+  /**
+   * Binds this pool to a provider (default daemon path). If a createSession factory
+   * was already supplied via constructor, this is a no-op other than warm-up.
+   */
+  async start(provider: AIProvider): Promise<void> {
+    if (!this._createSession) {
+      this._createSession = async (workingDir?: string) => {
+        const session = await provider.createSession({
+          model: config.copilotModel,
+          configDir: SESSIONS_DIR,
+          workingDirectory: workingDir,
+        });
+        const s = session as unknown as TSession;
+        // Normalize for pool shutdown/recycle.
+        if (!(s as any).close) {
+          (s as any).close = () => {
+            try { (session as unknown as AIProviderSession).destroy?.(); } catch {}
+          };
+        }
+        return s;
+      };
+    }
+
+    if (this._started) return;
+    this._started = true;
+    await this.warmUp();
     log.info("Worker pool started", { minWarm: this.minWarm, maxTotal: this.maxTotal });
   }
 
-  async return(ps: PooledSession): Promise<void> {
-    if (this._isExpiredLegacy(ps)) {
-      await this.discard(ps);
-      await this._legacyReplenish();
-      return;
-    }
-    ps.status = "warm";
-    ps.workingDir = undefined;
-    // Janitor: force-return sessions checked out longer than maxSessionAge
-    for (const s of this._legacySessions) {
-      if (s.status === "checked-out" && this._isExpiredLegacy(s)) {
-        log.warn("Janitor: force-returning expired checked-out session", { age: Date.now() - s.createdAt });
-        s.status = "warm";
-        s.workingDir = undefined;
-      }
-    }
-    // Hackathon #48: resolve waiting checkout callers immediately
-    if (this._legacyWaiters.length > 0) {
-      ps.status = "checked-out";
-      const resolve = this._legacyWaiters.shift()!;
-      resolve(ps);
-    }
-  }
-
-  async discard(ps: PooledSession): Promise<void> {
-    this._legacySessions = this._legacySessions.filter((s) => s !== ps);
-    try { await ps.session.destroy(); } catch { /* best effort */ }
-  }
-
   async shutdown(): Promise<void> {
-    if (this._replenishTimer) clearInterval(this._replenishTimer);
-    if (this._newMode) {
-      this._entries = [];
-    } else {
-      await Promise.allSettled(this._legacySessions.map((s) => s.session.destroy()));
-      this._legacySessions = [];
-    }
+    const entries = this._entries;
+    this._entries = [];
+    this._waiters = [];
+    await Promise.allSettled(
+      entries.map(async (e) => {
+        try { e.session.close?.(); } catch {}
+      })
+    );
+    this._started = false;
     log.info("Worker pool shut down");
   }
 
+  getStats(): { warm: number; checkedOut: number; total: number } {
+    const warm = this._entries.filter((e) => e.available).length;
+    const checkedOut = this._entries.filter((e) => !e.available).length;
+    return { warm, checkedOut, total: this._entries.length };
+  }
+
   async warmUp(): Promise<void> {
-    const warmCount = this._entries.filter((e) => e.available).length;
+    if (!this._createSession) return;
+    const warmCount = this._entries.filter((e) => e.available && !this._isExpired(e)).length;
     const needed = Math.max(0, this.minWarm - warmCount);
-    const available = this.maxTotal - this._entries.length;
-    const toCreate = Math.min(needed, available);
+    const availableSlots = Math.max(0, this.maxTotal - this._entries.length);
+    const toCreate = Math.min(needed, availableSlots);
+
     for (let i = 0; i < toCreate; i++) {
       try {
-        const s = await this._createSession!();
+        const s = await this._createSession();
         this._entries.push({ session: s, createdAt: Date.now(), available: true });
       } catch (err) {
         log.warn("Failed to warm session", { err: String(err) });
@@ -135,80 +107,42 @@ export class WorkerPool {
     }
   }
 
-  async checkin(session: { id: string; close?: () => void }): Promise<void> {
-    const entry = this._entries.find((e) => e.session === session);
-    if (!entry) return;
-
-    // Janitor: force-return any sessions checked out longer than maxSessionAge
-    for (const e of this._entries) {
-      if (!e.available && e !== entry && this._isExpiredNew(e)) {
-        log.warn("Janitor: force-returning expired checked-out session", { id: e.session.id, age: Date.now() - e.createdAt });
-        e.available = true;
-      }
+  async checkout(workingDir?: string): Promise<TSession> {
+    if (!this._createSession) {
+      throw new Error("Worker pool not started — call start(provider) first");
     }
 
-    if (this._isExpiredNew(entry)) {
-      this._entries = this._entries.filter((e) => e !== entry);
-      try { entry.session.close?.(); } catch {}
-      if (this._waiters.length > 0) {
-        const resolve = this._waiters.shift()!;
-        try {
-          const ns = await this._createSession!();
-          this._entries.push({ session: ns, createdAt: Date.now(), available: false });
-          resolve(ns);
-        } catch {}
-      }
-    } else {
-      entry.available = true;
-      if (this._waiters.length > 0) {
-        const resolve = this._waiters.shift()!;
-        entry.available = false;
-        resolve(entry.session);
-      }
+    // Prefer a warm non-expired session.
+    for (const entry of this._entries) {
+      if (!entry.available) continue;
+      if (this._isExpired(entry)) continue;
+      if (workingDir && entry.workingDir && entry.workingDir !== workingDir) continue;
+      entry.available = false;
+      entry.workingDir = workingDir;
+      return entry.session;
     }
-  }
 
-    async checkout(workingDir?: string): Promise<any> {
-    if (this._newMode) {
-      return this._newCheckout();
+    // Prune expired warm sessions.
+    const expiredWarm = this._entries.filter((e) => e.available && this._isExpired(e));
+    if (expiredWarm.length > 0) {
+      this._entries = this._entries.filter((e) => !e.available || !this._isExpired(e));
+      await Promise.allSettled(expiredWarm.map(async (e) => { try { e.session.close?.(); } catch {} }));
     }
-    return this._legacyCheckout(workingDir ?? "");
-  }
-
-  getStats(): { warm: number; checkedOut: number; total: number } {
-    if (this._newMode) {
-      const warm = this._entries.filter((e) => e.available).length;
-      const co = this._entries.filter((e) => !e.available).length;
-      return { warm, checkedOut: co, total: this._entries.length };
-    }
-    const warm = this._legacySessions.filter((s) => s.status === "warm").length;
-    const co = this._legacySessions.filter((s) => s.status === "checked-out").length;
-    return { warm, checkedOut: co, total: this._legacySessions.length };
-  }
-
-  private static readonly CHECKOUT_TIMEOUT_MS = 120_000;
-
-  private async _newCheckout(): Promise<{ id: string; close?: () => void }> {
-    for (const e of this._entries) {
-      if (e.available && !this._isExpiredNew(e)) {
-        e.available = false;
-        return e.session;
-      }
-    }
-    this._entries = this._entries.filter((e) => !e.available || !this._isExpiredNew(e));
 
     if (this._entries.length < this.maxTotal) {
-      const s = await this._createSession!();
-      this._entries.push({ session: s, createdAt: Date.now(), available: false });
+      const s = await this._createSession(workingDir);
+      this._entries.push({ session: s, createdAt: Date.now(), available: false, workingDir });
       return s;
     }
 
-    return new Promise<{ id: string; close?: () => void }>((resolve, reject) => {
+    // Wait for a check-in.
+    return new Promise<TSession>((resolve, reject) => {
       const timer = setTimeout(() => {
         const idx = this._waiters.indexOf(resolve);
         if (idx !== -1) this._waiters.splice(idx, 1);
         reject(new Error("Worker pool checkout timed out after 120s — all sessions are busy"));
-      }, WorkerPool.CHECKOUT_TIMEOUT_MS);
+      }, CHECKOUT_TIMEOUT_MS);
+
       this._waiters.push((session) => {
         clearTimeout(timer);
         resolve(session);
@@ -216,68 +150,41 @@ export class WorkerPool {
     });
   }
 
-  // Hackathon #48: event-driven waiters replace setInterval(100ms) polling
-  private _legacyWaiters: Array<(ps: PooledSession) => void> = [];
+  async checkin(session: TSession): Promise<void> {
+    const entry = this._entries.find((e) => e.session === session);
+    if (!entry) return;
 
-  private async _legacyCheckout(workingDir: string): Promise<PooledSession> {
-    const warm = this._legacySessions.find(
-      (s) => s.status === "warm" && !this._isExpiredLegacy(s)
-    );
-    if (warm) {
-      warm.status = "checked-out";
-      warm.workingDir = workingDir;
-      return warm;
+    // If expired, recycle.
+    if (this._isExpired(entry)) {
+      this._entries = this._entries.filter((e) => e !== entry);
+      try { entry.session.close?.(); } catch {}
+
+      if (this._waiters.length > 0) {
+        const resolve = this._waiters.shift()!;
+        try {
+          const replacement = await this._createSession?.(entry.workingDir);
+          if (replacement) {
+            this._entries.push({ session: replacement, createdAt: Date.now(), available: false, workingDir: entry.workingDir });
+            resolve(replacement);
+            return;
+          }
+        } catch {
+        }
+      }
+      return;
     }
-    if (this._legacySessions.length < this.maxTotal) {
-      const ps = await this._legacyCreate();
-      ps.status = "checked-out";
-      ps.workingDir = workingDir;
-      this._legacySessions.push(ps);
-      return ps;
-    }
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        const idx = this._legacyWaiters.indexOf(wrappedResolve);
-        if (idx !== -1) this._legacyWaiters.splice(idx, 1);
-        reject(new Error("Worker pool checkout timed out after 120s — all sessions are busy"));
-      }, WorkerPool.CHECKOUT_TIMEOUT_MS);
-      const wrappedResolve = (ps: PooledSession) => {
-        clearTimeout(timer);
-        ps.workingDir = workingDir;
-        resolve(ps);
-      };
-      this._legacyWaiters.push(wrappedResolve);
-    });
-  }
 
-  private async _legacyCreate(): Promise<PooledSession> {
-    if (!this._legacyClient) throw new Error("Pool not started — call start() first");
-    const session = await this._legacyClient.createSession({ model: this._legacyCfg.model });
-    return { session, status: "warm", createdAt: Date.now() };
-  }
+    entry.available = true;
+    entry.workingDir = undefined;
 
-  private async _legacyReplenish(): Promise<void> {
-    const expired = this._legacySessions.filter(
-      (s) => s.status === "warm" && this._isExpiredLegacy(s)
-    );
-    for (const s of expired) await this.discard(s);
-
-    const warmCount = this._legacySessions.filter((s) => s.status === "warm").length;
-    const needed = Math.max(0, this.minWarm - warmCount);
-    const avail = this.maxTotal - this._legacySessions.length;
-    const toCreate = Math.min(needed, avail);
-    for (let i = 0; i < toCreate; i++) {
-      try {
-        this._legacySessions.push(await this._legacyCreate());
-      } catch { break; }
+    if (this._waiters.length > 0) {
+      const resolve = this._waiters.shift()!;
+      entry.available = false;
+      resolve(entry.session);
     }
   }
 
-  private _isExpiredLegacy(ps: PooledSession): boolean {
-    return Date.now() - ps.createdAt > this._maxSessionAge;
-  }
-
-  private _isExpiredNew(entry: PoolEntry): boolean {
+  private _isExpired(entry: PoolEntry<TSession>): boolean {
     return Date.now() - entry.createdAt > this._maxSessionAge;
   }
 }
@@ -286,9 +193,9 @@ export function isPoolEnabled(): boolean {
   return (process.env.HOOT_POOL_ENABLED ?? process.env.MAX_POOL_ENABLED) !== "0";
 }
 
-let _pool: WorkerPool | undefined;
+let _pool: WorkerPool<any> | undefined;
 
-export function getWorkerPool(): WorkerPool {
+export function getWorkerPool(): WorkerPool<any> {
   if (!_pool) _pool = new WorkerPool();
   return _pool;
 }

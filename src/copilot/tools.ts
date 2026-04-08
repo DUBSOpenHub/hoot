@@ -14,6 +14,7 @@ import { listSkills, createSkill, removeSkill } from "./skills.js";
 import { config, persistModel, MAX_CONCURRENT_WORKERS } from "../config.js";
 import { SESSIONS_DIR } from "../paths.js";
 import { getCurrentSourceChannel } from "./orchestrator.js";
+import { createJob, runJob } from "../workers/job-runner.js";
 import { getRouterConfig, updateRouterConfig } from "./router.js";
 
 function isTimeoutError(err: unknown): boolean {
@@ -45,6 +46,7 @@ export interface WorkerInfo {
   lastOutput?: string;
   startedAt?: number;
   originChannel?: "telegram" | "tui";
+  pooledSession?: AIProviderSession;
 }
 
 export interface ToolDeps {
@@ -85,12 +87,12 @@ export function createTools(deps: ToolDeps): Tool<any>[] {
           return `Worker limit reached (${MAX_CONCURRENT_WORKERS}). Active: ${names}. Kill a session first.`;
         }
 
-        let pooledSession: import("../workers/pool.js").PooledSession | undefined;
+        let pooledSession: AIProviderSession | undefined;
         let session: AIProviderSession;
 
         if (featureFlags.poolEnabled) {
-          pooledSession = await getWorkerPool().checkout(args.working_dir);
-          session = pooledSession!.session as unknown as AIProviderSession;
+          session = await getWorkerPool().checkout(args.working_dir);
+          pooledSession = session;
         } else {
           session = await deps.provider.createSession({
             model: config.copilotModel,
@@ -105,6 +107,7 @@ export function createTools(deps: ToolDeps): Tool<any>[] {
           workingDir: args.working_dir,
           status: "idle",
           originChannel: getCurrentSourceChannel(),
+          pooledSession,
         };
         deps.workers.set(args.name, worker);
 
@@ -144,7 +147,7 @@ export function createTools(deps: ToolDeps): Tool<any>[] {
           }).finally(() => {
             deleteCheckpoint(args.name);
             if (featureFlags.poolEnabled && pooledSession) {
-              getWorkerPool().return(pooledSession).catch(() => {});
+              getWorkerPool().checkin(pooledSession).catch(() => {});
             } else {
               session.destroy().catch(() => {});
             }
@@ -192,7 +195,11 @@ export function createTools(deps: ToolDeps): Tool<any>[] {
           worker.lastOutput = errMsg;
           deps.onWorkerComplete(args.name, errMsg);
         }).finally(() => {
-          worker.session.destroy().catch(() => {});
+          if (worker.pooledSession) {
+            getWorkerPool().checkin(worker.pooledSession).catch(() => {});
+          } else {
+            worker.session.destroy().catch(() => {});
+          }
           deps.workers.delete(args.name);
           getDb().prepare(`DELETE FROM worker_sessions WHERE name = ?`).run(args.name);
         });
@@ -243,7 +250,11 @@ export function createTools(deps: ToolDeps): Tool<any>[] {
           return `No worker named '${args.name}'.`;
         }
         try {
-          await worker.session.destroy();
+          if (worker.pooledSession) {
+            await getWorkerPool().checkin(worker.pooledSession);
+          } else {
+            await worker.session.destroy();
+          }
         } catch {
         }
         deps.workers.delete(args.name);
@@ -489,6 +500,23 @@ export function createTools(deps: ToolDeps): Tool<any>[] {
       },
     }),
 
+    defineTool("create_marathon_job", {
+      description:
+        "Create a durable marathon job that survives daemon restarts. " +
+        "Use for long-running multi-step prompts that should be resumed automatically.",
+      parameters: z.object({
+        prompt: z.string().min(1).describe("The marathon prompt to execute"),
+        step_count: z.number().int().min(1).max(50).describe("How many durable steps to run"),
+      }),
+      handler: async (args) => {
+        const job = createJob(args.prompt, args.step_count, "marathon");
+        void runJob(job.id).catch((err) => {
+          log.error("Marathon job failed", { jobId: job.id, err: String(err) });
+        });
+        return `Created marathon job ${job.id} with ${args.step_count} durable step(s). It will resume automatically after a restart if needed.`;
+      },
+    }),
+
     defineTool("remember", {
       description:
         "Save something to Hoot's long-term memory. Use when the user says 'remember that...', " +
@@ -564,6 +592,7 @@ export function createTools(deps: ToolDeps): Tool<any>[] {
         return `Restarting Hoot 🦉${reason}. I'll be back in a few seconds.`;
       },
     }),
+
   ];
 }
 

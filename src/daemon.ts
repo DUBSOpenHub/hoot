@@ -11,6 +11,7 @@ import { getTuiAdapter } from "./channels/tui.js";
 import { wireMetrics } from "./observability/metrics.js";
 import { getPluginManager } from "./plugins/manager.js";
 import { getWorkerPool } from "./workers/pool.js";
+import { resumeJobs } from "./workers/job-runner.js";
 import { createLogger } from "./observability/logger.js";
 
 const log = createLogger("daemon");
@@ -62,6 +63,13 @@ async function main(): Promise<void> {
   log.info("Creating orchestrator session...");
   await initOrchestrator(client);
   log.info("Orchestrator session ready");
+
+  // Durable jobs survive restarts — resume any pending/running jobs now.
+  await resumeJobs().catch((err) => {
+    log.error("Job resume failed", { err: String(err) });
+  });
+
+  log.info("Durable jobs resumed");
 
   setProactiveNotify((text, channel) => {
     log.info(`bg-notify (${channel ?? "all"}) ⟵  ${truncate(text)}`);
