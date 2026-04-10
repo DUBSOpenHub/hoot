@@ -72,7 +72,7 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 app.use(rateLimit);
 
 app.use((req: Request, res: Response, next: NextFunction) => {
-  if (!apiToken || req.path === "/status" || req.path === "/metrics" || req.path === "/send-photo") return next();
+  if (!apiToken || req.path === "/status" || req.path === "/metrics") return next();
   const auth = req.headers.authorization;
   if (!auth || auth !== `Bearer ${apiToken}`) {
     logAudit("auth_reject", req.ip ?? "unknown", { path: req.path, method: req.method }, "api");

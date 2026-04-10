@@ -1,7 +1,7 @@
 #!/bin/bash
 # Install all skills from github/awesome-copilot into Hoot
-BOT_TOKEN="8794621367:AAHDU4SlkpvC1HKfOgx-Hvyd1rFE7IxiuCQ"
-CHAT_ID="8658497464"
+BOT_TOKEN="${HOOT_TELEGRAM_TOKEN:?Error: HOOT_TELEGRAM_TOKEN not set}"
+CHAT_ID="${HOOT_CHAT_ID:?Error: HOOT_CHAT_ID not set}"
 
 echo "[awesome] Waiting for network..."
 while true; do
