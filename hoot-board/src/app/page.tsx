@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import bakedSkillCount from "./skill-count.json";
 
 /* ---------------------------------------------
    Scroll-triggered visibility hook
@@ -458,7 +459,7 @@ export default function Home() {
   }>({ status: "unknown", workers: [], circuitBreakers: {}, skillCount: 0 });
 
   const [awesomeCopilotCount, setAwesomeCopilotCount] = useState(0);
-  const skillCount = dashboardData.skillCount || awesomeCopilotCount || 245;
+  const skillCount = dashboardData.skillCount || awesomeCopilotCount || bakedSkillCount.total;
   const skillLabel = skillCount > 0 ? `${skillCount} Superpowers and Growing` : "Superpowers from awesome-copilot";
   const typingPhrases = [
     TYPING_PHRASES_STATIC[0],
@@ -471,12 +472,18 @@ export default function Home() {
   useEffect(() => {
     const fetchAwesomeCount = async () => {
       try {
-        const res = await fetch("https://api.github.com/repos/github/awesome-copilot/contents/skills");
-        if (res.ok) {
-          const items = await res.json();
-          if (Array.isArray(items)) setAwesomeCopilotCount(items.length);
-        }
-      } catch { /* ignore */ }
+        const dirs = ["skills", "agents", "instructions"];
+        const counts = await Promise.all(
+          dirs.map(async (dir) => {
+            const res = await fetch(`https://api.github.com/repos/github/awesome-copilot/contents/${dir}`);
+            if (!res.ok) return 0;
+            const items = await res.json();
+            return Array.isArray(items) ? items.length : 0;
+          })
+        );
+        const total = counts.reduce((a, b) => a + b, 0);
+        if (total > 0) setAwesomeCopilotCount(total);
+      } catch { /* ignore — falls back to baked-in count */ }
     };
     fetchAwesomeCount();
   }, []);
